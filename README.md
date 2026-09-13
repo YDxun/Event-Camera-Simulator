@@ -1,6 +1,6 @@
 # Python Event Camera Simulator (`evsim`)
 
-[![Deploy to Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/)
+[![Deploy to Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://event-camera-simulator-7mlnyhk52f9fp4ydasp4jd.streamlit.app/)
 
 A configurable, explainable and verifiable event-camera simulator written in Python.
 It converts high-FPS grayscale/video frames into asynchronous event streams
@@ -302,6 +302,11 @@ event stream or event timestamps.
 - `results_python/REPORT.md`: generated engineering validation report.
 
 ## Interactive UI
+
+
+Live public app:
+
+https://event-camera-simulator-7mlnyhk52f9fp4ydasp4jd.streamlit.app/
 
 A lightweight Streamlit UI is included in `app.py`. It uses the same `evsim`
 core as the CLI and does not duplicate simulator logic.
