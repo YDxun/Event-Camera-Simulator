@@ -300,7 +300,12 @@ def main() -> None:
 
         with st.expander("Execution control"):
             max_frames = st.number_input(
-                "Maximum frames (0 = all)", 0, 1_000_000, 0, 10
+                "Maximum frames (0 = all)",
+                0,
+                1_000_000,
+                240,
+                10,
+                help="240 frames keeps the hosted demo responsive. Use 0 only for short clips when full processing is required.",
             )
 
         submitted = st.form_submit_button(
@@ -328,10 +333,8 @@ def main() -> None:
             )
             with st.spinner("Running event simulation..."):
                 input_playback_path = None
-                if input_path.is_file():
-                    input_playback_path = _transcode_for_browser(
-                        input_path, workdir / "input_playback_h264.mp4"
-                    )
+                if input_path.is_file() and input_path.suffix.lower() == ".mp4":
+                    input_playback_path = input_path
                 result, video_path = _run_ui_simulation(input_path, config, workdir)
                 input_preview, event_preview, overlay_preview = _render_preview(
                     input_path,
