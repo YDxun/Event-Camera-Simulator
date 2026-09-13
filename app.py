@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+import subprocess
 import tempfile
 import zipfile
 from pathlib import Path
@@ -10,6 +11,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 import streamlit as st
+from imageio_ffmpeg import get_ffmpeg_exe
 
 from evsim.config import SimulatorConfig
 from evsim.demo import write_synthetic_video
@@ -43,6 +45,42 @@ def _save_upload(upload, workdir: Path, default_suffix: str) -> Path:
     path = workdir / f"input{suffix}"
     path.write_bytes(upload.getbuffer())
     return path
+
+def _transcode_for_browser(source: Path, destination: Path) -> Path:
+    """Convert a local video to browser-compatible H.264 MP4."""
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    command = [
+        get_ffmpeg_exe(),
+        "-y",
+        "-i",
+        str(source),
+        "-an",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "veryfast",
+        "-crf",
+        "23",
+        "-pix_fmt",
+        "yuv420p",
+        "-movflags",
+        "+faststart",
+        str(destination),
+    ]
+    completed = subprocess.run(
+        command,
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    if completed.returncode != 0 or not destination.exists():
+        raise RuntimeError(
+            "FFmpeg H.264 conversion failed: " + completed.stderr[-1000:]
+        )
+    return destination
+
 
 def _build_config(
     preset: str,
@@ -78,7 +116,8 @@ def _run_ui_simulation(
     config: SimulatorConfig,
     workdir: Path,
 ) -> tuple[SimulationResult, Path]:
-    output_video = workdir / "event_video.mp4"
+    output_video = workdir / "event_video_raw.mp4"
+    browser_video = workdir / "event_video_h264.mp4"
     config.visualization.output_video = str(output_video)
     config.output.npz_path = str(workdir / "events.npz")
     config.output.statistics_path = str(workdir / "statistics.json")
@@ -106,7 +145,9 @@ def _run_ui_simulation(
         __import__("json").dumps(result.statistics, indent=2) + chr(10),
         encoding="utf-8",
     )
-    return result, renderer.actual_output_path or output_video
+    raw_path = renderer.actual_output_path or output_video
+    _transcode_for_browser(raw_path, browser_video)
+    return result, browser_video
 
 def _to_rgb(image: np.ndarray) -> np.ndarray:
     if image.ndim == 2:
@@ -260,6 +301,11 @@ def main() -> None:
                 max_frames=int(max_frames),
             )
             with st.spinner("Running event simulation..."):
+                input_playback_path = None
+                if input_path.is_file():
+                    input_playback_path = _transcode_for_browser(
+                        input_path, workdir / "input_playback_h264.mp4"
+                    )
                 result, video_path = _run_ui_simulation(input_path, config, workdir)
                 input_preview, event_preview, overlay_preview = _render_preview(
                     input_path,
@@ -271,6 +317,9 @@ def main() -> None:
                 )
             st.session_state["ui_result"] = {
                 "input_path": str(input_path),
+                "input_playback_path": (
+                    str(input_playback_path) if input_playback_path else None
+                ),
                 "video_path": str(video_path),
                 "npz_path": config.output.npz_path,
                 "statistics_path": config.output.statistics_path,
@@ -327,8 +376,18 @@ def main() -> None:
     )
 
     video_path = Path(ui_result["video_path"])
-    if video_path.exists():
-        st.video(str(video_path))
+    playback_cols = st.columns(2)
+    with playback_cols[0]:
+        st.markdown("**Input video**")
+        input_playback = ui_result.get("input_playback_path")
+        if input_playback and Path(input_playback).exists():
+            st.video(input_playback)
+        else:
+            st.info("The current source is an image sequence, so only the input preview is shown.")
+    with playback_cols[1]:
+        st.markdown("**Event video (H.264)**")
+        if video_path.exists():
+            st.video(str(video_path))
 
     download_cols = st.columns(3)
     npz_path = Path(ui_result["npz_path"])

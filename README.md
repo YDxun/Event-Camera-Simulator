@@ -316,7 +316,7 @@ The UI supports:
 - `C+`, `C-`, timestamp resolution, refractory period and accumulation window;
 - threshold variation, background activity and linearization toggles;
 - side-by-side Input / Events / Overlay preview;
-- event video, event statistics and NPZ download.
+- browser-playable H.264 event video, event statistics and NPZ download.
 
 Changing `C` immediately changes event density. Changing the accumulation
 window changes only the visualization density and never changes raw events.
