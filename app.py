@@ -378,13 +378,13 @@ def main() -> None:
     col_input, col_events, col_overlay = st.columns(3)
     with col_input:
         st.markdown("**Input**")
-        st.image(ui_result["input_preview"], use_column_width=True)
+        st.image(ui_result["input_preview"])
     with col_events:
         st.markdown("**Events**")
-        st.image(ui_result["event_preview"], use_column_width=True)
+        st.image(ui_result["event_preview"])
     with col_overlay:
         st.markdown("**Overlay**")
-        st.image(ui_result["overlay_preview"], use_column_width=True)
+        st.image(ui_result["overlay_preview"])
 
     event_rate = float(stats.get("event_rate_over_input_hz", 0.0)) / 1000.0
     metric_cols = st.columns(4)
