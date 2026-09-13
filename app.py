@@ -162,11 +162,13 @@ def _render_preview(
     height: int,
     accumulation_time_us: int,
     overlay_opacity: float,
+    processed_frames: int | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     source = open_source(input_path)
     try:
         total = source.total_frames or 1
-        target_index = max(total // 2, 0)
+        limit = processed_frames or total
+        target_index = max(min(limit, total) // 2, 0)
         target_frame = None
         for frame in source:
             if frame.index == target_index:
@@ -314,6 +316,7 @@ def main() -> None:
                     int(result.statistics["height"]),
                     int(accumulation_ms) * 1000,
                     config.visualization.overlay_opacity,
+                    processed_frames=result.frames_processed,
                 )
             st.session_state["ui_result"] = {
                 "input_path": str(input_path),
