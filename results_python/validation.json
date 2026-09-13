@@ -1,0 +1,48 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "name": "static_scene_no_events",
+      "passed": true,
+      "details": {
+        "events": 0
+      }
+    },
+    {
+      "name": "bright_ramp_multiple_positive",
+      "passed": true,
+      "details": {
+        "events": 34
+      }
+    },
+    {
+      "name": "dark_ramp_multiple_negative",
+      "passed": true,
+      "details": {
+        "events": 34
+      }
+    },
+    {
+      "name": "timestamp_quantization",
+      "passed": true,
+      "details": {
+        "events": 34
+      }
+    },
+    {
+      "name": "refractory_period",
+      "passed": true,
+      "details": {
+        "events": 9
+      }
+    },
+    {
+      "name": "vectorized_equals_pixel_loop",
+      "passed": true,
+      "details": {
+        "vectorized_events": 12630,
+        "loop_events": 12630
+      }
+    }
+  ]
+}

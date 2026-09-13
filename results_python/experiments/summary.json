@@ -1,0 +1,161 @@
+{
+  "validation": {
+    "passed": true,
+    "checks": [
+      {
+        "name": "static_scene_no_events",
+        "passed": true,
+        "details": {
+          "events": 0
+        }
+      },
+      {
+        "name": "bright_ramp_multiple_positive",
+        "passed": true,
+        "details": {
+          "events": 34
+        }
+      },
+      {
+        "name": "dark_ramp_multiple_negative",
+        "passed": true,
+        "details": {
+          "events": 34
+        }
+      },
+      {
+        "name": "timestamp_quantization",
+        "passed": true,
+        "details": {
+          "events": 34
+        }
+      },
+      {
+        "name": "refractory_period",
+        "passed": true,
+        "details": {
+          "events": 9
+        }
+      },
+      {
+        "name": "vectorized_equals_pixel_loop",
+        "passed": true,
+        "details": {
+          "vectorized_events": 12630,
+          "loop_events": 12630
+        }
+      }
+    ]
+  },
+  "benchmark": {
+    "vectorized": {
+      "elapsed_s": 0.5149047000159044,
+      "frames_per_s": 56.321101747768566,
+      "mega_pixel_frames_per_s": 0.3892914552805763,
+      "events": 889455
+    },
+    "loop": {
+      "elapsed_s": 8.902471700013848,
+      "frames_per_s": 3.2575222901247627,
+      "mega_pixel_frames_per_s": 0.02251599406934236,
+      "events": 889455
+    },
+    "speedup_loop_over_vectorized": 17.289552221486556
+  },
+  "threshold_sweep": [
+    {
+      "threshold": 0.1,
+      "event_count": 256211,
+      "event_rate_hz": 1546934.3396226414
+    },
+    {
+      "threshold": 0.15,
+      "event_count": 156546,
+      "event_rate_hz": 945183.3962264152
+    },
+    {
+      "threshold": 0.2,
+      "event_count": 114563,
+      "event_rate_hz": 691701.1320754717
+    },
+    {
+      "threshold": 0.25,
+      "event_count": 89068,
+      "event_rate_hz": 537769.0566037736
+    },
+    {
+      "threshold": 0.3,
+      "event_count": 72298,
+      "event_rate_hz": 436516.22641509434
+    },
+    {
+      "threshold": 0.4,
+      "event_count": 51748,
+      "event_rate_hz": 312440.75471698114
+    }
+  ],
+  "noise_ablation": [
+    {
+      "variant": "ideal",
+      "event_count": 69767,
+      "on_events": 34221,
+      "off_events": 35546
+    },
+    {
+      "variant": "threshold_variation",
+      "event_count": 71051,
+      "on_events": 34823,
+      "off_events": 36228
+    },
+    {
+      "variant": "background",
+      "event_count": 69865,
+      "on_events": 34272,
+      "off_events": 35593
+    },
+    {
+      "variant": "combined",
+      "event_count": 71150,
+      "on_events": 34865,
+      "off_events": 36285
+    }
+  ],
+  "fps_sweep": [
+    {
+      "fps": 120,
+      "event_count": 35,
+      "count_error_vs_3840": -3,
+      "timing_rmse_us_vs_3840": 38967.87495983986
+    },
+    {
+      "fps": 240,
+      "event_count": 37,
+      "count_error_vs_3840": -1,
+      "timing_rmse_us_vs_3840": 1363.3555285754694
+    },
+    {
+      "fps": 480,
+      "event_count": 38,
+      "count_error_vs_3840": 0,
+      "timing_rmse_us_vs_3840": 790.4638212034622
+    },
+    {
+      "fps": 960,
+      "event_count": 38,
+      "count_error_vs_3840": 0,
+      "timing_rmse_us_vs_3840": 326.46648897100084
+    },
+    {
+      "fps": 1920,
+      "event_count": 38,
+      "count_error_vs_3840": 0,
+      "timing_rmse_us_vs_3840": 136.23200025961904
+    },
+    {
+      "fps": 3840,
+      "event_count": 38,
+      "count_error_vs_3840": 0,
+      "timing_rmse_us_vs_3840": 0.0
+    }
+  ]
+}

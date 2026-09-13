@@ -1,0 +1,1104 @@
+
+===== PAGE 1 =====
+EE5110/EE6110
+Special Topics in Automation and Control
+Segment B
+From Frames to Events:
+Theory and Applications of Event-based Vision
+Jiang Rui, Ph.D., BEng 
+rui.j@nus.edu.sg
+Adjunct Lecturer
+Department of Electrical and Computer Engineering
+===== PAGE 2 =====
+Jiang Rui EE5110/EE6110 2026/8/10 2
+Contacts
+• You may contact me via
+Phone +65-89423081 (emergencies)
+Email rui.j@nus.edu.sg (other issues)
+• NUS Canvas 
+https://canvas.nus.edu.sg/ 
+▪ Maintain communication after class
+▪ A place for you to discuss anytime, 
+anywhere, and to exchange 
+information
+===== PAGE 3 =====
+Jiang Rui EE5110/EE6110 2026/8/10 3
+Your feedback is valuable to us…
+• Join the online student feedback exercise!
+• Feedback report includes two parts:
+▪ Course report and teacher report
+• Course report
+▪ Overall opinion, your expected grade, difficulty level
+• Teacher report
+▪ Feedback to each lecturer
+Leave your (detailed) comments, not just scores.
+
+===== PAGE 4 =====
+Jiang Rui EE5110/EE6110 2026/8/10 4
+Continuous Assessment (CA)
+Important information:
+• For CA, this is group work:
+▪ Form yourselves into groups of 1-5 students.
+▪ Each group should have one group leader. 
+▪ Self-organize yourselves into groups in CANVAS before the next 
+lecture. 
+• Submission for CA: 4 parts
+1) A presentation video (<15 mins), 2) presentation slides, 3) source code,
+4) AI use and review report, if any AI tool used (in .pdf format)
+• Submit in one zip file with name: your_group_leader_NUS_ID.zip, e.g., 
+A0123456X.zip.
+
+===== PAGE 5 =====
+Jiang Rui EE5110/EE6110 2026/8/10 5
+Continuous Assessment (CA)
+• Contribution weight within a group
+
+===== PAGE 6 =====
+Jiang Rui EE5110/EE6110 2026/8/10 6
+CA: Design an Event Camera Simulator
+• Aim: To design a simulation framework to generate events, given high 
+frame-rate images as inputs. A reference diagram is shown below:
+• The principle of event camera and event data simulation will be discussed 
+later in the 1st lecture.
+High FPS frames
+e.g., 960 FPS
+Input Output
+Simulated eventsEvent simulator
++ illustrative 
+video!
+Parameters
+1610.08336.pdf (arxiv.org)
+(4) The Event-Camera Dataset and Simulator - YouTube
+===== PAGE 7 =====
+Jiang Rui EE5110/EE6110 2026/8/10 7
+CA: Design an Event Camera Simulator
+1610.08336.pdf (arxiv.org)
+(4) The Event-Camera Dataset and Simulator - YouTube
+===== PAGE 8 =====
+Jiang Rui EE5110/EE6110 2026/8/10 8
+Research Project (RP)
+Important information:
+• For RP ,this is an individual project.
+• Submit in one zip file with name: your_NUS_ID.zip, e.g., A0123456X.zip.
+• Submission for RP: 4 parts
+1) A report (≤6 pages), 2) demo video, 3) source code, 
+4) AI use and review report, if any AI tool used (in .pdf format)
+• Please always remain contactable during the semester,
+to arrange a 1-on-1 presentation:
+▪ 15~20 min presentation
+▪ 5 min live demo
+▪ 5~10 min Q&A
+===== PAGE 9 =====
+Jiang Rui EE5110/EE6110 2026/8/10 9
+RP: Event-based Speed/Flow Estimation
+• Aim: To design and implement an event-based speed/flow estimation 
+framework. A reference diagram is shown below:
+• Information hub for event-based vision:
+uzh-rpg/event-based_vision_resources (github.com)
+• More information/Q&A session in the 2nd lecture, after introduction of all 
+required backgrounds/knowledge.
+Events
+Low FPS frames,
+ e.g., 30 FPS
+(optional)
+Input Output
+Speed estimation
+results
+Speed/flow
+estimation
+algorithm
++ illustrative 
+video!
+===== PAGE 10 =====
+Jiang Rui EE5110/EE6110 2026/8/10 10
+RP: Event-based Speed Estimation
+https://www.youtube.com/watch?v=nUb2ZRPdbWk
+
+===== PAGE 11 =====
+Jiang Rui EE5110/EE6110 2026/8/10 11
+Continuous Assessment (CA) and Research Project (RP)
+Important information:
+• Written report / presentation should contain at least the following:
+1. An abstract that briefly summarizes what you have done and what the 
+results are,
+2. a brief introduction to the project and the problem that you are 
+solving,
+3. derivation of the model (“problem formulation”),
+4. description of the framework and algorithm(s) used
+5. the results and discussion,
+6. conclusions and/or a summary,
+7. references (if applicable).
+===== PAGE 12 =====
+Jiang Rui EE5110/EE6110 2026/8/10 12
+Continuous Assessment (CA) and Research Project (RP)
+• AI Policy for this Segment
+▪ AI tools are optional. If you use any AI tool, you must submit a concise 
+AI Use and Review Report documenting its use and your review of the 
+AI-generated content. Otherwise, your submission will be regarded as 
+entirely your own work without AI assistance.
+• The AI Use and Review Report should include:
+1. AI tool used
+2. Purpose of using AI
+3. 2-3 representative prompts (Full chat history is not required)
+4. Summary of useful AI feedback
+5. Changes made after AI feedback
+6. One AI suggestion not accepted, with reason
+7. Brief reflection on the reliability/limitations of AI
+===== PAGE 13 =====
+Jiang Rui EE5110/EE6110 2026/8/10 13
+Continuous Assessment (CA) and Research Project (RP)
+• Be responsible to your submission
+▪ You are fully responsible for the correctness of the submitted code and 
+outputs.
+▪ You must understand and be able to explain your submitted work.
+▪ You may use any accessible AI tool, subject to university and course 
+guidelines: https://ctlt.nus.edu.sg/ai-community-of-practice/policies/
+
+===== PAGE 14 =====
+Jiang Rui EE5110/EE6110 2026/8/10 14
+Continuous Assessment (CA) and Research Project (RP)
+• Project end time and date: All results must be submitted by
+CA - 11:59pm, Fri, 18 Sep 2026 (Week 6)
+RP - 11:59pm, Fri, 6 Nov 2026 (Week 12)
+to CANVAS.
+• RP presentation: in Week 13 / reading week
+===== PAGE 15 =====
+Jiang Rui EE5110/EE6110 2026/8/10 15
+Course Structure
+• Lecture 1 – Event-based Vision System 
+▪ Conventional machine vision systems
+▪ Event-based sensors and cameras
+▪ Event camera calibration
+▪ Event camera autofocus
+▪ Event data simulation and dataset
+▪ Event data representation and compression
+===== PAGE 16 =====
+Jiang Rui EE5110/EE6110 2026/8/10 16
+Course Structure
+• Lecture 2 – Algorithms and Applications
+▪ Detection and tracking
+▪ Optical flow estimation
+▪ Pose estimation and SLAM
+▪ Image reconstruction
+▪ Motion segmentation
+▪ Motion recognition
+Summary for Segment B
+▪ An introductory course for event-based vision
+▪ Seminar-like course with a wide range of topics
+▪ Many papers, videos and applications to be given
+▪ (hopefully, for Ph.D. students) Bringing ideas to research projects
+===== PAGE 17 =====
+Jiang Rui EE5110/EE6110 2026/8/10 17
+Learning Objectives
+• In this lecture, you are expected to:
+1. Describe and explain the basic concepts in both conventional and 
+event-based machine vision systems;
+2. Understand the principle, pros and cons, and current status of event 
+cameras;
+3. Understand the common procedure of event-based sensing, including 
+data representation and data compression;
+4. Understand the mechanism and principles of event data simulation.
+===== PAGE 18 =====
+Jiang Rui EE5110/EE6110 2026/8/10 18
+Closed Loop Control System
+https://www.tutorialspoint.com/control_systems/control_systems_introduction.htm
+• What are we discussing in this Segment?
+▪ Feedback elements / sensors
+• Vision sensors
+• Event-based Vision Sensors (EVS) 
+===== PAGE 19 =====
+Jiang Rui EE5110/EE6110 2026/8/10 19
+Conventional Machine Vision (CIS-based) Systems
+
+===== PAGE 20 =====
+Jiang Rui EE5110/EE6110 2026/8/10 20
+Sensor Functions Inside a Camera
+• Typical CMOS Camera (CIS) Layout
+
+===== PAGE 21 =====
+Jiang Rui EE5110/EE6110 2026/8/10 21
+Open Challenges in Computer Vision
+http://rpg.ifi.uzh.ch/docs/scaramuzza/Tutorial_on_Event_Cameras_Scaramuzza.pdf
+
+===== PAGE 22 =====
+Jiang Rui EE5110/EE6110 2026/8/10 22
+Inspiration
+• Inspired by biological sensor – our eyes
+http://rpg.ifi.uzh.ch/docs/scaramuzza/Tutorial_on_Event_Cameras_Scaramuzza.pdf
+Event Cameras Tutorial - Delbruck - v3.0.pdf - Google Drive https://www.allaboutvision.com/eye -care/eye-anatomy/eye-structure/photoreceptors/
+• >100M photoreceptors
+• Different eyes for different conditions/scenes
+• 180dB dynamic range
+• Real-time data compression and 
+representation, transmitting information to 
+the brain for processing
+===== PAGE 23 =====
+Jiang Rui EE5110/EE6110 2026/8/10 23
+Traditional Camera vs. Event Camera
+http://rpg.ifi.uzh.ch/docs/scaramuzza/Tutorial_on_Event_Cameras_Scaramuzza.pdf
+• A traditional camera outputs frames at fixed time intervals:
+• By contrast, an event camera outputs asynchronous events at microsecond 
+resolution. An event is generated each time a single pixel detects an 
+intensity change that is larger than the threshold.
+time
+frame next frame
+time
+events stream
+event: 𝑡, 𝑥, 𝑦 , 𝑠𝑖𝑔𝑛 𝑑𝐼(𝑥, 𝑦)
+𝑑𝑡
+Event polarity (or sign) (-1 or 1): increase or decrease of brightness
+Timestamp (s)
+Pixel coordinates
+===== PAGE 24 =====
+Jiang Rui EE5110/EE6110 2026/8/10 24
+What is an Event-based Vision Sensor (EVS)?
+[Lichtsteiner, Posch, Delbruck, A 128x128 120 dB 15µs Latency Asynchronous Temporal Contrast Vision Sensor , 2008
+http://rpg.ifi.uzh.ch/docs/scaramuzza/Tutorial_on_Event_Cameras_Scaramuzza.pdf
+• Novel sensor that measures only pixel-wise brightness 
+change
+• First commercialized in 2008 by T. Delbruck (UZH&ETH) 
+under the name of Dynamic Vision Sensor (DVS)
+• Low-latency (~ 1 μs)
+• No motion blur
+• High dynamic range (140 dB instead of 60 dB)
+• Ultra-low power (mean: 1mW vs 1W)
+Traditional vision algorithms 
+cannot be used because: 
+• Asynchronous pixels 
+• No intensity information (only 
+binary intensity changes)
+Image of the solar eclipse 
+captured by a DVS
+
+===== PAGE 25 =====
+Jiang Rui EE5110/EE6110 2026/8/10 25
+EVS Mechanism
+• Chip photographs
+• Stacked layers: 77% fill factor
+Event-based Vision Sensor (EVS) Technology | Image Sensor for Industrial Use | Technology | Sony Semiconductor Solutions Group ( sony-semicon.com)
+Prophesee and Sony Develop a Stacked Event -Based Vision Sensor
+
+===== PAGE 26 =====
+Jiang Rui EE5110/EE6110 2026/8/10 26
+EVS Mechanism
+• Pixel diagram of EVS
+Event-based Vision Sensor (EVS) Technology | Image Sensor for Industrial Use | Technology | Sony Semiconductor Solutions Group ( sony-semicon.com)
+===== PAGE 27 =====
+Jiang Rui EE5110/EE6110 2026/8/10 27
+EVS Mechanism
+• Pixel diagram of EVS with absolute intensity measurement
+
+===== PAGE 28 =====
+Jiang Rui EE5110/EE6110 2026/8/10 28
+EVS Mechanism
+• Event read-out: aims to achieve highspeed 
+and lower latency by either
+▪ Arbitration circuit (in right fig.)
+• Ultra-low latency (true event-driven, events 
+transmitted almost immediately)
+• High circuit complexity
+▪ Row and column scanner and read-out
+• Simple circuit design, easy to scale to high -
+resolution arrays
+• Higher latency
+• Built-in hardware event filter and event signal 
+processing (ESP)
+▪ Denoiser
+▪ Anti-flickering 
+Event-based Vision Sensor (EVS) Technology | Image Sensor for Industrial Use | Technology | Sony Semiconductor Solutions Group ( sony-semicon.com)
+Prophesee and Sony Develop a Stacked Event -Based Vision Sensor
+CVPRW2023 EVS_presentation_230619.pptx - Google Slides
+Pros and cons?
+Pros and cons?
+===== PAGE 29 =====
+Jiang Rui EE5110/EE6110 2026/8/10 29
+EVS Mechanism
+• Example: a CIS-EVS hybrid 3-layer stacking sensor
+A 3-Wafer-Stacked Hybrid 15MPixel CIS + 1 MPixel EVS with 4.6GEvent/s Readout, In-Pixel TDC and On-Chip ISP and ESP Function | IEEE Conference Publication | 
+IEEE Xplore
+
+===== PAGE 30 =====
+Jiang Rui EE5110/EE6110 2026/8/10 30
+Generative Event Model
+http://rpg.ifi.uzh.ch/docs/scaramuzza/Tutorial_on_Event_Cameras_Scaramuzza.pdf
+• Consider the intensity at a single pixel…
+±𝐶 = log 𝐼 𝒙, 𝑡 − log 𝐼 𝒙, 𝑡 − Δ𝑡
+log 𝐼(𝒙, 𝑡)
+𝑂𝑁
+𝑂𝐹𝐹 𝑂𝐹𝐹 𝑂𝐹𝐹
+𝑂𝑁 𝑂𝑁
+𝑂𝐹𝐹𝑂𝐹𝐹 𝑂𝐹𝐹
+Events are triggered asynchronously!
+𝑂𝑁 𝑂𝑁
+𝐶 = Contrast threshold
+Why events are generated?
+===== PAGE 31 =====
+Jiang Rui EE5110/EE6110 2026/8/10 31
+Generative Event Model: 1st Order Approximation
+• Let us define 𝐿(𝑥,𝑦,𝑡)=𝐿𝑜𝑔(𝐼(𝑥,𝑦,𝑡))
+• Consider a given pixel 𝑝(𝑥,𝑦) with gradient 𝛻𝐿(𝑥,𝑦) undergoing the motion 
+𝒖=(𝑢,𝑣) in pixels, induced by a moving 3D point 𝐏. 
+• Then, it can be shown that:
+http://rpg.ifi.uzh.ch/docs/scaramuzza/Tutorial_on_Event_Cameras_Scaramuzza.pdf
+−𝛻𝐿 · 𝐮 = 𝐶
+
+===== PAGE 32 =====
+Jiang Rui EE5110/EE6110 2026/8/10 32
+Generative Event Model: 1st Order Approximation – Proof
+• Recall the Brightness constancy assumption, which says: the intensity 
+value of 𝑝, before and after the motion, must remain unchanged.
+• By replacing the right-hand term by its 1st order approximation at 𝑡+∆𝑡:
+▪ This equation describes the linearized event generation equation for an event 
+generated by a gradient 𝛻𝐿 that moved by a motion vector 𝐮 (optical flow) during a 
+time interval Δ𝑡.
+http://rpg.ifi.uzh.ch/docs/scaramuzza/Tutorial_on_Event_Cameras_Scaramuzza.pdf
+𝐿 𝑥, 𝑦, 𝑡 = 𝐿 𝑥 + 𝑢, 𝑦 + 𝑣, 𝑡 + ∆𝑡
+𝐿 𝑥, 𝑦, 𝑡 = 𝐿 𝑥, 𝑦, 𝑡 + ∆𝑡 + 𝜕𝐿
+𝜕𝑥 𝑢 + 𝜕𝐿
+𝜕𝑦 𝑣
+⇒ 𝐿 𝑥, 𝑦, 𝑡 + ∆𝑡 − 𝐿 𝑥, 𝑦, 𝑡 = − 𝜕𝐿
+𝜕𝑥 𝑢 − 𝜕𝐿
+𝜕𝑦 𝑣
+⇒  ∆L = 𝐶 = −𝛻𝐿 · 𝐮
+===== PAGE 33 =====
+Jiang Rui EE5110/EE6110 2026/8/10 33
+Event Camera Output With/Without Motion
+http://rpg.ifi.uzh.ch/docs/scaramuzza/Tutorial_on_Event_Cameras_Scaramuzza.pdf
+• Without motion, only output is the background noise 
+Standard Camera Event Camera (ON, OFF events)
+Camera not moving
+===== PAGE 34 =====
+Jiang Rui EE5110/EE6110 2026/8/10 34
+Event Camera Output With/Without Motion
+http://rpg.ifi.uzh.ch/docs/scaramuzza/Tutorial_on_Event_Cameras_Scaramuzza.pdf
+Standard Camera Event Camera (ON, OFF events)
+Camera moving
+===== PAGE 35 =====
+Jiang Rui EE5110/EE6110 2026/8/10 35
+Examples: Inverted Pendulum
+• Low latency, high-speed measurement on pencil angle using event cameras
+Conradt, Cook, Berner, Lichtsteiner, Douglas, Delbruck, A pencil balancing robot using a pair of AER dynamic vision sensors , IEEE International Symposium on Circuits and Systems. 2009
+
+===== PAGE 36 =====
+Jiang Rui EE5110/EE6110 2026/8/10 36
+Examples: Low-light Sensitivity (Night Drive)
+http://rpg.ifi.uzh.ch/docs/scaramuzza/Tutorial_on_Event_Cameras_Scaramuzza.pdf
+Video courtesy of Prophesee: https://www.prophesee.ai
+• Excellent night vision ability
+GoPro Hero 6 Event Camera by Prophesee
+White = Positive events
+Black = Negative events
+===== PAGE 37 =====
+Jiang Rui EE5110/EE6110 2026/8/10 37
+High-speed vs. Event Cameras
+http://rpg.ifi.uzh.ch/docs/scaramuzza/Tutorial_on_Event_Cameras_Scaramuzza.pdf
+• Can I just use
+a high-speed camera?
+Photron 7,5kHz camera
+DVS
+High speed camera Standard camera Event Camera
+Max fps or measurement  rate Up to 1MHz 100-1,000 fps 1MHz
+Resolution at max fps 64x16 pixels >1Mpxl >1Mpxl
+Bits per pixels/ Bits per event 12 bits/pixel 8-10bits/pixel ~40 bits/event {t, (x, y),p}
+Weight 6.2 kg 30 g 30 g
+Active cooling yes No cooling No cooling
+Data rate 1.5 GB/s 32MB/s ~1MB/s on average 
+(depends on dynamics)
+Mean power consumption 150 W + external 
+light
+1 W 1 mW
+Dynamic range n.a. 60 dB 140 dB
+
+===== PAGE 38 =====
+Jiang Rui EE5110/EE6110 2026/8/10 38
+Color Event Cameras
+• Two ways to build a color event camera
+▪ color filter
+▪ color-splitter prisms
+• Some publications of practical color event cameras available
+• Simulated data available for research
+https://www.youtube.com/watch?v=CysnFwFetpM 
+color-splitter prismscolor filters
+more expensive
+===== PAGE 39 =====
+Jiang Rui EE5110/EE6110 2026/8/10 39
+Event Camera + Conventional Camera + …
+http://rpg.ifi.uzh.ch/docs/scaramuzza/Tutorial_on_Event_Cameras_Scaramuzza.pdf
+• Design idea: utilize the complementary advantages of event and standard 
+cameras, and other sensors.
+Event Camera Standard Camera
+Update rate High (asynchronous): 1 MHz Low (synchronous)
+Dynamic Range High (140 dB) Low (60 dB)
+Motion Blur No Yes
+Static motion No (event camera is a high pass filter) Yes
+Absolute intensity No (reconstructable up to a constant) Yes
+Maturity ~ 10 years of research > 60 years of research!
+===== PAGE 40 =====
+Jiang Rui EE5110/EE6110 2026/8/10 40
+Example: DAVIS Sensor (Events + Images + IMU)
+• Combines an event and a standard camera in the same pixel array
+ (→ the same pixel can both trigger events and integrate light intensity). 
+• It also has an IMU.
+http://rpg.ifi.uzh.ch/docs/scaramuzza/Tutorial_on_Event_Cameras_Scaramuzza.pdf
+Temporal aggregation of events 
+overlaid on a DAVIS frame
+Events time
+Standard images
+===== PAGE 41 =====
+Jiang Rui EE5110/EE6110 2026/8/10 41
+Event Camera Manufactures and Products
+Event-based Vision: A Survey (arxiv.org)
+
+===== PAGE 42 =====
+Jiang Rui EE5110/EE6110 2026/8/10 42
+Event Camera Manufactures and Products
+SmartThings Vision | GP-U999GTEEAAC | Samsung Australia
+• SmartThings Vision by Samsung
+“Security that respects your privacy”
+Unexpected person 
+or intruder warning
+while helps protects the 
+privacy
+===== PAGE 43 =====
+Jiang Rui EE5110/EE6110 2026/8/10 43
+Event Camera Manufactures and Products
+• Industrial solutions by Phophesee
+▪ ULTRA SLOW MOTION - Up to 200,000 fps (time resolution equivalent)
+▪ OBJECT TRACKING - Continuous tracking in time, no blind spots 
+between frames
+Event-Based Vision Applications | PROPHESEE
+
+===== PAGE 44 =====
+Jiang Rui EE5110/EE6110 2026/8/10 44
+Event Camera Manufactures and Products
+• Industrial solutions by Phophesee
+▪ OPTICAL FLOW – intrinsic from the sensor, much less power 
+consumption
+▪ HIGH-SPEED COUNTING – Throughput >1,000 Obj/s
+Accuracy >99.5% @1,000 Obj/s.
+Event-Based Vision Applications | PROPHESEE
+
+===== PAGE 45 =====
+Jiang Rui EE5110/EE6110 2026/8/10 45
+Event Camera Manufactures and Products
+• Industrial, IoT, and robotics solutions by Phophesee
+▪ VIBRATION MONITORING - From 1Hz to kHz range
+▪ VISUAL ODOMETRY – under fast motion
+Event-Based Vision Applications | PROPHESEE
+
+===== PAGE 46 =====
+Jiang Rui EE5110/EE6110 2026/8/10 46
+Event Camera Manufactures and Products
+• Industrial, IoT, and robotics solutions by Phophesee
+▪ TRAFFIC DATA ACQUISITION – vehicle speed measurement
+▪ GESTURE DETECTION – for human-machine interaction
+Event-Based Vision Applications | PROPHESEE
+
+===== PAGE 47 =====
+Jiang Rui EE5110/EE6110 2026/8/10 47
+Event Camera Manufactures and Products
+• Gaming solutions by SONY
+===== PAGE 48 =====
+Jiang Rui EE5110/EE6110 2026/8/10 48
+Fast-Growing Community
+• Statistics: Papers in computer vision and robotics venues
+▪ Event-based Vision Resources:
+GitHub - uzh-rpg/event-based_vision_resources
+Guillermo Gallego - Event-based Vision (google.com)
+https://www.youtube.com/playlist?list=PLeXWz -g2If96iotpzgBNNTr9VA6hG -LLK 
+
+===== PAGE 49 =====
+Jiang Rui EE5110/EE6110 2026/8/10 49
+Summary – Event-based Sensors and Cameras
+• Why we need event cameras: the motivation
+• EVS principles and mechanisms
+▪ Pixel design
+▪ The generative event model
+• Event camera manufactures, products, and applications
+• Fast-growing EVS community
+What else we need to build an event-based vision system?
+===== PAGE 50 =====
+Jiang Rui EE5110/EE6110 2026/8/10 50
+Break (15 mins)
+===== PAGE 51 =====
+Jiang Rui EE5110/EE6110 2026/8/10 51
+Event Camera Calibration
+• Why need camera calibration? 
+▪ To estimate the parameters of a lens and image sensor.
+• With a calibrated camera, you can:
+2021CVPRW_How_to_Calibrate_Your_Event_Camera.pdf (tub -rip.github.io)
+What Is Camera Calibration? - MATLAB & Simulink (mathworks.com)
+
+===== PAGE 52 =====
+Jiang Rui EE5110/EE6110 2026/8/10 52
+Camera Models
+• Pinhole camera model
+▪ A simple camera without a lens and with a single small aperture
+What Is Camera Calibration? - MATLAB & Simulink (mathworks.com)
+===== PAGE 53 =====
+Jiang Rui EE5110/EE6110 2026/8/10 53
+Camera Models
+• Pinhole camera model
+▪ Parameters are included in a 4-by-3 camera matrix: 3-D → 2-D
+What Is Camera Calibration? - MATLAB & Simulink (mathworks.com)
+
+===== PAGE 54 =====
+Jiang Rui EE5110/EE6110 2026/8/10 54
+Camera Models
+• Pinhole camera model
+▪ Extrinsics parameters: world points → camera coordinates
+▪ Intrinsics parameters: camera coordinates → image plane
+With extrinsics and intrinsics parameters, we could obtain the camera matrix!
+What Is Camera Calibration? - MATLAB & Simulink (mathworks.com)
+===== PAGE 55 =====
+Jiang Rui EE5110/EE6110 2026/8/10 55
+Camera Models
+• Extrinsic parameters
+▪ consist of a rotation, R, and a translation, t.
+R: rotation matrix
+t: translation vector
+What Is Camera Calibration? - MATLAB & Simulink (mathworks.com)
+===== PAGE 56 =====
+Jiang Rui EE5110/EE6110 2026/8/10 56
+Camera Models
+• Intrinsic parameters
+▪ include: the focal length, the optical center, also known as the 
+principal point, and the skew coefficient
+What Is Camera Calibration? - MATLAB & Simulink (mathworks.com)
+What is the unit of cx and cy? 
+===== PAGE 57 =====
+Jiang Rui EE5110/EE6110 2026/8/10 57
+Distortion in Camera Calibration
+Lens distortion requires additional correction.
+▪ Radial Distortion: Light rays bend more near the edges of a lens than 
+they do at its optical center.
+▪ Tangential Distortion: when the lens and the image plane are not 
+parallel
+What Is Camera Calibration? - MATLAB & Simulink (mathworks.com)
+radial distortion coefficients
+tangential distortion coefficients
+r2 = x2 + y2
+===== PAGE 58 =====
+Jiang Rui EE5110/EE6110 2026/8/10 58
+Calibration Process
+1. Prepare the pattern, camera, and images (by taking pictures)
+2. Add images to the calibrator and select standard or fisheye camera model
+3. Calibrate the camera and obtain the parameters
+4. Evaluate calibration accuracy
+5. Adjust parameters to improve accuracy
+6. Export the parameters and complete the calibration
+Single Camera Calibrator App - MATLAB & Simulink (mathworks.com)
+Suppose you already have an algorithm to calibrate the camera. 
+Can you design a calibration protocol?
+===== PAGE 59 =====
+Jiang Rui EE5110/EE6110 2026/8/10 59
+Prepare Images
+• Print the checkerboard pattern and attach it to a flat surface.
+• Measure the size of the checkerboard square for future use.
+• Capture 10 and 20 images of the calibration pattern. Do not compress the 
+image.
+Single Camera Calibrator App - MATLAB & Simulink (mathworks.com)
+Even number of squares along one edge and 
+an odd number of squares along the other edge
+?
+?
+x
+yx
+y
+
+===== PAGE 60 =====
+Jiang Rui EE5110/EE6110 2026/8/10 60
+Calibrate
+1. Solve for the intrinsics and extrinsics in closed form, assuming that 
+lens distortion is zero. 
+Prob Formulation:
+Given the correspondence between 3-D and 2-D 
+points, find the camera matrix P.
+How to find the correspondence?
+Image plane
+(Known) 3-D 
+checkerboard 
+corner points 
+By corner detection!
+(Known) 2-D 
+projection of 
+checkerboard 
+corner points
+raw image binarization
+ dilation quadrilateral detection
+ result
+(0,0,0)
+x
+y
+z
+Why not directly solve all 
+parameters including lens 
+distortion?
+===== PAGE 61 =====
+Jiang Rui EE5110/EE6110 2026/8/10 61
+Calibrate
+With the correspondence, we have 
+the closed-form solution. Details 
+omitted, please refer to the paper:
+Zhang, Zhengyou. "A flexible new technique 
+for camera calibration." IEEE Transactions 
+on pattern analysis and machine 
+intelligence 22.11 (2000): 1330-1334.
+tr98-71.pdf (microsoft.com)
+
+===== PAGE 62 =====
+Jiang Rui EE5110/EE6110 2026/8/10 62
+Calibrate
+2. Refine above results by minimizing the reprojection error. Estimate all 
+parameters simultaneously, including the distortion coefficients, using 
+nonlinear least-squares minimization (Levenberg–Marquardt 
+algorithm).
+Single Camera Calibrator App - MATLAB & Simulink (mathworks.com)
+===== PAGE 63 =====
+Jiang Rui EE5110/EE6110 2026/8/10 63
+Evaluate Calibration Results
+• Check the Reprojection Errors Bar Graph
+• Check the Extrinsic Parameter Visualization
+• Check undistorted image
+Single Camera Calibrator App - MATLAB & Simulink (mathworks.com)
+Incorrect distorted-undistorted image pairCorrect distorted-undistorted image pair
+Reprojection Errors Bar Graph Extrinsic Parameter Visualization
+===== PAGE 64 =====
+Jiang Rui EE5110/EE6110 2026/8/10 64
+Improve Calibration
+• Add or Remove Images
+▪ Add images if there is <10 images, the pattern do not cover the whole 
+frame, or the pattern do not have enough variation in orientation w.r.t. 
+the camera.
+▪ Remove those images with a high mean reprojection error, blurred 
+images, or images with incorrectly detected checkerboard points. 
+• Change the number of radial distortion coefficients
+▪ Typically, two coefficients are sufficient for calibration. For severe 
+distortion, such as in wide-angle lenses, you can select 3 coefficients to 
+include k3.
+• Any other possible ways to improve calibration:
+▪ Compute the skew parameter
+▪ Compute tangential distortion
+Single Camera Calibrator App - MATLAB & Simulink (mathworks.com)
+A complex camera model may not be always better!
+===== PAGE 65 =====
+Jiang Rui EE5110/EE6110 2026/8/10 65
+• What makes it different for event camera calibration?
+▪ Camera model? Lens distortion?
+▪ Event camera output nothing when there is no motion…
+• Ideas
+1. Design a calibration pattern that constantly triggers events, or
+2. Reconstruct events into frames, such that standard calibration patterns 
+can be used.
+Event Camera Calibration
+===== PAGE 66 =====
+Jiang Rui EE5110/EE6110 2026/8/10 66
+Designing a Calibration Pattern That Constantly Triggers Events
+Event-Based Camera Calibration - YouTube
+===== PAGE 67 =====
+Jiang Rui EE5110/EE6110 2026/8/10 67
+▪ Intrinsic calibration for event camera
+▪ Multi-sensor extrinsics calibration (conventional camera, event camera, 
+and IMU)
+Calibration by Reconstructing Events into Frames
+2021CVPRW_How_to_Calibrate_Your_Event_Camera.pdf (tub -rip.github.io)
+
+===== PAGE 68 =====
+Jiang Rui EE5110/EE6110 2026/8/10 68
+Event Camera Autofocus
+• Autofocus optical system
+▪ Active: by measuring the distance between subject and camera
+▪ Passive: by analysing the measured image
+1. contrast detection
+https://www.photoreview.com.au/tips/shooting/improving -autofocus-performance/
+https://www.cambridgeincolour.com/tutorials/camera -autofocus.htm  
+Tech of Digital & Software products (techdigitalsoftwareproduct.blogspot.com)
+
+===== PAGE 69 =====
+Jiang Rui EE5110/EE6110 2026/8/10 69
+Event Camera Autofocus
+• Autofocus optical system
+▪ Active: by measuring the distance between subject and camera
+▪ Passive: by analysing the measured image
+2. phase detection
+autofocus - confusion about the principle of on -sensor PDAF technique - Photography Stack Exchange
+Improving autofocus performance - Photo Review
+Pros and cons for contrast detection and phase detection for autofocus?
+Exclusive: Fujifilm's phase detection system explained: Digital Photography Review (dpreview.com)
+Fast!
+===== PAGE 70 =====
+Jiang Rui EE5110/EE6110 2026/8/10 70
+Event Camera Autofocus
+https://arxiv.org/abs/2203.12321  
+• Autofocus for Event Cameras (CVPR 2022)
+
+===== PAGE 71 =====
+Jiang Rui EE5110/EE6110 2026/8/10 71
+Event Data Simulation
+• Why need event data simulation?
+▪ Not everyone has an event camera!
+▪ To configure parameters in event generation process
+(To freely control the event generation: 
+noise level, resolution, triggering threshold, …)
+▪ To help build the event sensor model mathematically.
+===== PAGE 72 =====
+Jiang Rui EE5110/EE6110 2026/8/10 72
+Event Data Simulation
+• Event data simulators
+▪ ESIM
+ESIM (uzh.ch)
+intensity    optical flow
+camera pose,
+translational and 
+rotational velocities
+===== PAGE 73 =====
+Jiang Rui EE5110/EE6110 2026/8/10 73
+Event Data Simulation
+ESIM (uzh.ch)
+
+===== PAGE 74 =====
+Jiang Rui EE5110/EE6110 2026/8/10 74
+Event Data Simulation
+• Event data simulators
+▪ v2e (2021, CVPR Workshop on EVS) 
+v2e (google.com)
+2006.07722.pdf (arxiv.org)
+
+===== PAGE 75 =====
+Jiang Rui EE5110/EE6110 2026/8/10 75
+Event Data Simulation
+• v2e: Noises in event generation model
+▪ Threshold mismatch: Typical value θ = 0.3.
+Threshold varies with a Gaussian distribution σθ ≈ 0.03.
+▪ Hot pixels: EVS sensors always have some ‘hot pixels’, which 
+continuously fire events at a high rate even in the absence of input.
+▪ Leak noise events: EVS pixels emit spontaneous ON events called leak 
+events with typical rates ≈ 0.1 Hz. 
+v2e (google.com)
+2006.07722.pdf (arxiv.org)
+
+===== PAGE 76 =====
+Jiang Rui EE5110/EE6110 2026/8/10 76
+Event Data Simulation
+• v2e vs ESIM
+ESIM v2e
+Complex front-end:
+• Can simulate camera motion
+Simpler front-end:
+• Only process movies without 
+modelling 3D environments
+Programmed in C++ Programmed in Python
+Basic pixel model:
+• Contrast thresholds with Gaussian 
+noise for the whole sensor
+More realistic pixel model:
+• Pixel to pixel Gaussian temporal 
+contrast threshold variation
+• Finite, intensity-dependent 
+photoreceptor bandwidth
+• Leak events (intensity-dependent 
+background activity noise)
+• Intensity-dependent temporal 
+noise
+v2e (google.com)
+===== PAGE 77 =====
+Jiang Rui EE5110/EE6110 2026/8/10 77
+Event Datasets
+• The Multi Vehicle Stereo Event Camera Dataset (MVSEC)
+▪ Good for optical flow estimation, pose estimation, and SLAM  
+Multi Vehicle Stereo Event Camera Dataset (daniilidis -group.github.io)
+
+===== PAGE 78 =====
+Jiang Rui EE5110/EE6110 2026/8/10 78
+Event Datasets
+• A Stereo Event Camera Dataset for Driving Scenarios (DSEC Dataset)
+▪ Stereo camera dataset in driving scenarios
+▪ 2 monochrome event cameras + 2 global shutter color cameras
+▪  Lidar data and RTK GPS measurements
+DSEC – A Stereo Event Camera Dataset for Driving Scenarios (uzh.ch)
+
+===== PAGE 79 =====
+Jiang Rui EE5110/EE6110 2026/8/10 79
+Event Datasets
+• CED: Color Event Camera Dataset
+▪ Featuring 50 minutes of footage with both color frames and color 
+events from the Color-DAVIS346.
+CED: Color Event Camera Dataset (uzh.ch)
+rpg.ifi.uzh.ch/docs/CVPRW19_Scheerlinck.pdf
+
+===== PAGE 80 =====
+Jiang Rui EE5110/EE6110 2026/8/10 80
+Event Datasets
+• DVS128 Gesture Dataset
+▪ 11 hand gestures from 29 subjects under 3 illumination conditions
+▪ Can be used to build the gesture recognition system
+DVS128 Gesture Dataset - IBM Research
+
+===== PAGE 81 =====
+Jiang Rui EE5110/EE6110 2026/8/10 81
+Summary – Event Camera Vision Systems in Real-World Environments
+A single EVS chip is not enough in the wild. 
+• To enhance data quality:
+▪ Event camera calibration
+▪ Event camera autofocus
+• To augment EVS database:
+▪ Event data simulation
+▪ Event datasets
+===== PAGE 82 =====
+Jiang Rui EE5110/EE6110 2026/8/10 82
+Event Data Representation: Raw Data (Event Point Cloud)
+Event-Based Visual Flow Ryad Benosman, Charles Clercq, Xavier Lagorce, Sio-Hoi Ieng, and Chiara Bartolozz, untitled (neuromorphic-vision.com)
++ All information retained
+- Requires algorithm that can 
+accept point cloud as input
+
+===== PAGE 83 =====
+Jiang Rui EE5110/EE6110 2026/8/10 83
+Event Data Representation: Event Frames
+Accumulation 
+interval
+Events
+Event binary frame
+Event count frame 5 4 6 3 3
+0 6 6 5 3
+1 0 2 0 0
+5 4 2 1 2
+4 5 5 6 2
+0 0 0 0 0
+0 1 1 1 0
+0 0 0 0 1
+0 0 0 1 0
+0 1 0 1 0
+Different types 
+of event frames
+The number of 
+triggering times
+If the pixel has 
+been triggered
+3 3 3 0 0
+4 4 4 0 0
+5 5 5 0 0
+2 2 2 0 0
+1 1 1 0 0Event flow frame
+The triggering 
+time of the pixel
++ Easy to process by off-the-shelf 
+machine vision algorithms
+- Information loss
+- Only contains events in 
+accumulation interval
+===== PAGE 84 =====
+Jiang Rui EE5110/EE6110 2026/8/10 84
+Event Data Representation: Event Tensors
+• Adding another dimension to event frames, representing long-time events
++ Easy to process by off-the-shelf machine vision algorithms
+   (especially for deep learning)
++ Represents events in longer time interval without loss too much information
+- Requires experiments to determine the number and length of accumulation intervals for best 
+performance, depending on different application
+Accumulation 
+intervals
+2 3 …
+Event XXX frame s
+Event tensor
+1
+===== PAGE 85 =====
+Jiang Rui EE5110/EE6110 2026/8/10 85
+Influence of Event Representation on Data Rate
+• Exercise: Suppose each pixel triggers 1 time per second on average; 
+The resolution of the sensor is 1 Mega Pixels. 
+Event (x, y, p, t) encoding is (uint10, uint10, binary, uint32).
+• Calculate and compare the data rate for:
+▪ event point cloud
+▪ 30 fps event binary frames (binary)
+▪ 30 fps event count frames (uint8)
+Solution:
+We may firstly compute how many bits required to represent one event:
+10+10+1+32 = 53 bits
+In total, the data rate for raw events is:
+53 bits/evt x 1 M evts/s = 53 M bits/s
+===== PAGE 86 =====
+Jiang Rui EE5110/EE6110 2026/8/10 86
+Influence of Event Representation on Data Rate
+Solution:
+For event binary frames, 30 fps data rate equals to
+30 fps x 1M pixels/frame x 1 bit/pixel = 30M bits/s
+Similarly you could compute the data rate for 8-bit event count image.
+Note:
+• The data rate for event frames does not change w.r.t. event rate, with a 
+fixed event frame rate. 
+→ Data rate more stable. Good or bad? Depending on your algorithm!
+• The data rate depends on particular scenarios. E.g., what if each pixel 
+triggers 10 times per second?
+→ The event frame representation will have much smaller data rate!
+===== PAGE 87 =====
+Jiang Rui EE5110/EE6110 2026/8/10 87
+Event Data Compression
+• Some people say, “Event data rate is already much less than conventional 
+camera.” Why is data compression still required? 
+▪ Above statement is not always true. In practice, the event data rate 
+varies and depends on the scenario.
+▪ It is always better to use less bandwidth/space to transmit/store data!
+• Two main streams for 
+event data compression:
+▪ Lossy compression
+→ Event frames, event tensors
+ are lossy compression.
+▪ Lossless compression
+→ The main research direction
+ for event data compression.
+https://www.thebroadcastbridge.com/content/entry/16741/lossless -compression-rewriting-data-in-a-more-efficient-way
+
+===== PAGE 88 =====
+Jiang Rui EE5110/EE6110 2026/8/10 88
+Event Data Compression
+• Ideas
+1. General data compression approaches can still be applied.
+2. EVS-specific compression approaches. These approaches utilizes: 
+temporal redundancy, and spatial redundancy of events.
+• Temporal redundancy (left) and spatial redundancy (right)
+https://www.researchgate.net/publication/341585734_Lossless_Compression_of_Data_From_Static_and_Mobile_Dynamic_Vision_Sensors -Performance_and_Trade-Offs
+time
+assuming events timestamp
+differences are mostly equal
+assuming events are
+triggered in groups within
+a small neighborhood.
+Reason: adjacent pixels 
+receive almost the same 
+luminance concurrently
+Two modes based on above redundancies are available for event compression.
+===== PAGE 89 =====
+Jiang Rui EE5110/EE6110 2026/8/10 89
+Address-Prior Mode
+• Exploits temporal redundancy
+▪ The number of events at each pixel is 
+recorded, as shown in the fig.
+▪ We do “delta coding” on time.
+https://www.researchgate.net/publication/341585734_Lossless_Compression_of_Data_From_Static_and_Mobile_Dynamic_Vision_Sensors -Performance_and_Trade-Offs
+We could use less bits to represent Δt, based on 
+the temporal redundancy.
+→ Efficient compression on timestamp field.  
+===== PAGE 90 =====
+Jiang Rui EE5110/EE6110 2026/8/10 90
+Time-Prior Mode
+• Exploits spatial redundancy
+▪ Finds a centre point (x3, y3 in the fig).
+▪ Projects all other events w.r.t the centre 
+point.
+▪ We call this “delta coding” on x and y.
+We could use less bits to represent Δx and Δy, 
+based on the spatial redundancy.
+→ Efficient compression on address field.  
+Drawback: Not suitable for events in a large area.
+https://www.researchgate.net/publication/341585734_Lossless_Compression_of_Data_From_Static_and_Mobile_Dynamic_Vision_Sensors -Performance_and_Trade-Offs
+Open question: can we utilize the temporal redundancy 
+and spatial redundancy simultaneously?
+===== PAGE 91 =====
+Jiang Rui EE5110/EE6110 2026/8/10 91
+Summary – Event Data Pre-Processing
+The raw EVS data may not meet the needs of downstream applications.
+• To cater to various needs while reducing the data rate:
+▪ Event data representations
+Raw data – event “point cloud”, Event frames, Event tensors
+▪ Event data compression
+Temporal redundancy and spatial redundancy
+===== PAGE 92 =====
+Jiang Rui EE5110/EE6110 2026/8/10 92
+Discussion on CA: Design an Event Data Simulator
+• The principle of event camera and event data simulation have been 
+discussed in today’s lecture.
+• Aim: To design a simulation framework to generate events, given high 
+frame-rate images as inputs. A reference diagram is shown below:
+High FPS frames
+e.g., 960 FPS
+Input Output
+Simulated eventsEvent simulator
++ illustrative 
+video!
+Parameters
+1610.08336.pdf (arxiv.org)
+(4) The Event-Camera Dataset and Simulator - YouTube
+===== PAGE 93 =====
+Jiang Rui EE5110/EE6110 2026/8/10 93
+Discussion on CA: Design an Event Data Simulator
+• Top-down or bottom-up design philosophy: Which one would you like?
+Design simulator architecture Design pixel
+Combine pixel into pixel arrayElaborate each module
+(pixel array, IO, display)
+Add auxiliary functions 
+(IO, display, …)Design pixel
+• Usually used when off-the-
+shelf components (e.g., bolt) 
+are selected and integrated 
+into the product
+Bottom–up and top–down design - Wikipedia
+• Usually used for product with 
+more restrictive requirements
+• Almost every components is 
+customized
+• e.g., a space-suit
+===== PAGE 94 =====
+Jiang Rui EE5110/EE6110 2026/8/10 94
+Discussion on CA: Design an Event Data Simulator
+• For bottom-up method: Pixel design
+Inputs:
+Digital Numbers (DN) on 
+single pixel w.r.t. time
+Event sensing 
+pixelParameters:
+Triggering threshold
+Timestamp resolution
+…
+Outputs:
+Single pixel events
+(p, t)
+1) DN-log 
+illuminance
+Frames
+2) Time
+5) Check log illuminance based on the interval of 
+timestamp resolution:  ΔI > c?
+3) Discrete to 
+continuous 
+interpolation: 
+What is the 
+interpolation 
+method? 
+4) Noise simulation:
+What is your assumption 
+on noises?
+===== PAGE 95 =====
+Jiang Rui EE5110/EE6110 2026/8/10 95
+Discussion on CA: Design an Event Data Simulator
+• For bottom-up method: Pixel array design
+▪ In practice: a scanning mechanism/arbitration logic within the sensor 
+Could you propose any scanning mechanism?
+▪ If not, a naïve but effective alternative is to take each pixel 
+independently – easy to be implemented within a loop!
+Single pixel events
+(p, t)
+Event sensing 
+pixel
+Repeat for each pixel
+Event list
+(x, y, p, t)
+===== PAGE 96 =====
+Jiang Rui EE5110/EE6110 2026/8/10 96
+Discussion on CA: Design an Event Data Simulator
+• For bottom-up method: IO design
+▪ Input: a video clip. Supporting multiple FPS?
+▪ Output: an event list. 
+▪ Visualization: Event frames on top of the input video. 
+Supporting customized accumulation time?
+• Other considerations:
+▪ Running efficiency?
+▪ User-friendly interface / visualization?
+▪ Output data compression?
+And more…
+===== PAGE 97 =====
+Jiang Rui EE5110/EE6110 2026/8/10 97
+References
+1. Event-based Vision: A Survey (arxiv.org)
+2. CIS 849 -- Autonomous Robot Vision (udel.edu)
+3. Course Detail (imaging.org)

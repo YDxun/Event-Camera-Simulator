@@ -1,0 +1,65 @@
+{
+  "event_count": 728361,
+  "on_events": 316258,
+  "off_events": 412103,
+  "on_fraction": 0.434205016468482,
+  "off_fraction": 0.565794983531518,
+  "timestamp_min_us": 63,
+  "timestamp_max_us": 998956,
+  "duration_s": 0.998893,
+  "event_rate_hz": 729168.1891854282,
+  "monotonic_timestamps": true,
+  "x_min": 0,
+  "x_max": 319,
+  "y_min": 0,
+  "y_max": 239,
+  "frames_processed": 960,
+  "width": 320,
+  "height": 240,
+  "processing_fps": 152.74341006836687,
+  "pixel_frames_per_second": 11730693.893250575,
+  "input_video": "results_python\\demo\\input_960fps.avi",
+  "event_video": "results_python\\demo\\event_video.avi",
+  "config": {
+    "input": {
+      "fallback_fps": 960.0,
+      "linearize": false,
+      "gamma": 2.2,
+      "bit_depth": 8,
+      "timestamp_scale_us": 1.0
+    },
+    "sensor": {
+      "positive_threshold": 0.2,
+      "negative_threshold": 0.15,
+      "log_epsilon": 0.001,
+      "timestamp_resolution_us": 1,
+      "refractory_period_us": 100
+    },
+    "simulation": {
+      "interpolation": "linear",
+      "backend": "vectorized"
+    },
+    "noise": {
+      "enable_threshold_variation": true,
+      "threshold_sigma": 0.02,
+      "background_rate_hz": 0.02,
+      "random_seed": 42
+    },
+    "visualization": {
+      "accumulation_time_us": 5000,
+      "playback_fps": 30.0,
+      "overlay_opacity": 0.65,
+      "output_video": "results_python\\demo\\event_video.avi",
+      "display": false
+    },
+    "output": {
+      "csv_path": "results_python\\demo\\events.csv",
+      "npz_path": "results_python\\demo\\events.npz",
+      "statistics_path": "results_python\\demo\\statistics.json"
+    },
+    "runtime": {
+      "max_frames": 0,
+      "progress": true
+    }
+  }
+}

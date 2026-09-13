@@ -1,0 +1,26 @@
+[
+  {
+    "variant": "ideal",
+    "event_count": 69767,
+    "on_events": 34221,
+    "off_events": 35546
+  },
+  {
+    "variant": "threshold_variation",
+    "event_count": 71051,
+    "on_events": 34823,
+    "off_events": 36228
+  },
+  {
+    "variant": "background",
+    "event_count": 69865,
+    "on_events": 34272,
+    "off_events": 35593
+  },
+  {
+    "variant": "combined",
+    "event_count": 71150,
+    "on_events": 34865,
+    "off_events": 36285
+  }
+]
