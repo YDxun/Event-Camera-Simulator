@@ -30,9 +30,10 @@ class EventVideoRenderer:
         if events.size:
             x = events["x"].astype(np.intp)
             y = events["y"].astype(np.intp)
+            linear_index = np.ravel_multi_index((y, x), (self.height, self.width))
             positive = events["polarity"] > 0
-            np.add.at(self.on_count, (y[positive], x[positive]), 1)
-            np.add.at(self.off_count, (y[~positive], x[~positive]), 1)
+            np.add.at(self.on_count.reshape(-1), linear_index[positive], 1)
+            np.add.at(self.off_count.reshape(-1), linear_index[~positive], 1)
         if self.window_start_us is None:
             self.window_start_us = int(timestamp_us)
         self.window_end_us = int(timestamp_us)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import traceback
 import tempfile
 import zipfile
 from pathlib import Path
@@ -336,6 +337,8 @@ def main() -> None:
             }
         except Exception as exc:
             st.error(f"Simulation failed: {exc}")
+            with st.expander("Technical details"):
+                st.code(traceback.format_exc())
 
     ui_result = st.session_state.get("ui_result")
     if not ui_result:
