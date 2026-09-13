@@ -123,22 +123,44 @@ class EventStream:
         events["polarity"] = table["polarity"].astype(np.int8)
         return cls(events)
 
-    def summary(self) -> dict[str, Any]:
+    def summary(self, input_duration_us: int | None = None) -> dict[str, Any]:
+        """Return summary statistics.
+
+        ``event_rate_hz`` is retained as an alias of the active-duration rate.
+        New code should use the explicit ``event_rate_over_active_hz`` and,
+        when input duration is available, ``event_rate_over_input_hz``.
+        """
+
         count = len(self)
         if count == 0:
             return {
                 "event_count": 0,
                 "on_events": 0,
                 "off_events": 0,
+                "active_event_duration_s": 0.0,
+                "input_duration_s": (
+                    input_duration_us / 1_000_000.0
+                    if input_duration_us is not None
+                    else None
+                ),
+                "event_rate_over_active_hz": 0.0,
+                "event_rate_over_input_hz": 0.0,
                 "event_rate_hz": 0.0,
-                "duration_s": 0.0,
+                "event_rate_definition": "active_duration_alias",
                 "monotonic_timestamps": True,
             }
         ts = self.timestamp_us
-        duration_us = int(ts[-1] - ts[0])
-        duration_s = duration_us / 1_000_000.0
+        active_duration_us = int(ts[-1] - ts[0])
+        active_duration_s = active_duration_us / 1_000_000.0
+        input_duration_s = (
+            input_duration_us / 1_000_000.0
+            if input_duration_us is not None
+            else active_duration_s
+        )
         on_count = int(np.count_nonzero(self.polarity > 0))
         off_count = int(np.count_nonzero(self.polarity < 0))
+        active_rate = count / active_duration_s if active_duration_s > 0 else 0.0
+        input_rate = count / input_duration_s if input_duration_s > 0 else 0.0
         return {
             "event_count": count,
             "on_events": on_count,
@@ -147,8 +169,12 @@ class EventStream:
             "off_fraction": off_count / count,
             "timestamp_min_us": int(ts[0]),
             "timestamp_max_us": int(ts[-1]),
-            "duration_s": duration_s,
-            "event_rate_hz": count / duration_s if duration_s > 0 else 0.0,
+            "active_event_duration_s": active_duration_s,
+            "input_duration_s": input_duration_s,
+            "event_rate_over_active_hz": active_rate,
+            "event_rate_over_input_hz": input_rate,
+            "event_rate_hz": active_rate,
+            "event_rate_definition": "active_duration_alias",
             "monotonic_timestamps": self.is_monotonic(),
             "x_min": int(self.x.min()),
             "x_max": int(self.x.max()),

@@ -1,6 +1,7 @@
 ﻿import numpy as np
 
 from evsim.config import SimulatorConfig
+from evsim.preprocessing import to_log_intensity
 from evsim.simulator import EventSimulator
 
 
@@ -80,3 +81,40 @@ def test_threshold_variation_is_reproducible():
 
     assert np.array_equal(run(123), run(123))
     assert not np.array_equal(run(123), run(124))
+
+
+def test_analytical_timestamp_formula():
+    config = SimulatorConfig()
+    config.sensor.positive_threshold = 0.08
+    config.sensor.negative_threshold = 0.08
+    dark = np.full((1, 1), 5, dtype=np.uint8)
+    bright = np.full((1, 1), 250, dtype=np.uint8)
+    events = simulated(config, [dark, bright])
+    log0 = float(to_log_intensity(dark, config.input, config.sensor)[0, 0])
+    log1 = float(to_log_intensity(bright, config.input, config.sensor)[0, 0])
+    count = int(np.floor((log1 - log0) / config.sensor.positive_threshold + 1e-12))
+    expected = np.floor(
+        (np.arange(1, count + 1) * config.sensor.positive_threshold)
+        / (log1 - log0)
+        * 1000
+    ).astype(np.int64)
+    assert len(events) == count
+    assert np.all(np.abs(events["timestamp_us"] - expected) <= 1)
+    assert np.mean(np.abs(events["timestamp_us"] - expected)) <= 1
+
+
+def test_dark_saturation_and_duplicate_quantization_bins():
+    config = SimulatorConfig()
+    black = np.zeros((1, 1), dtype=np.uint8)
+    white = np.full((1, 1), 255, dtype=np.uint8)
+    near_white = np.full((1, 1), 250, dtype=np.uint8)
+    assert np.isfinite(to_log_intensity(black, config.input, config.sensor)).all()
+    assert len(simulated(config, [near_white, white])) == 0
+    assert len(simulated(config, [white, near_white])) == 0
+
+    config.sensor.timestamp_resolution_us = 100
+    events = simulated(config, [black, white])
+    gaps = np.diff(events["timestamp_us"])
+    assert np.all(events["timestamp_us"] % 100 == 0)
+    assert np.any(gaps == 0)
+    assert np.all(gaps >= 0)

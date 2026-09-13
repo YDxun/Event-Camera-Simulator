@@ -23,10 +23,29 @@
       }
     },
     {
-      "name": "timestamp_quantization",
+      "name": "analytical_timestamp_alignment",
       "passed": true,
       "details": {
-        "events": 34
+        "expected_events": 48,
+        "actual_events": 48,
+        "timestamp_mae_us": 0.5,
+        "timestamp_max_error_us": 1
+      }
+    },
+    {
+      "name": "asymmetric_threshold_validation",
+      "passed": true,
+      "details": {
+        "positive_events": 46,
+        "negative_events": 23
+      }
+    },
+    {
+      "name": "timestamp_quantization_floor_and_duplicates",
+      "passed": true,
+      "details": {
+        "events": 34,
+        "duplicate_timestamp_bins": 24
       }
     },
     {
@@ -34,6 +53,22 @@
       "passed": true,
       "details": {
         "events": 9
+      }
+    },
+    {
+      "name": "quantization_and_refractory_order",
+      "passed": true,
+      "details": {
+        "events": 10,
+        "duplicate_bins": 0
+      }
+    },
+    {
+      "name": "dark_and_saturation_edge_cases",
+      "passed": true,
+      "details": {
+        "black_log_finite": true,
+        "near_saturation_events": 0
       }
     },
     {

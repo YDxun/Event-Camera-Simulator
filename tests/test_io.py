@@ -60,6 +60,8 @@ def test_video_source_and_renderer(tmp_path: Path):
     output = renderer.open(tmp_path / "events.avi")
     events = np.array([(500, 10, 10, 1)], dtype=EVENT_DTYPE)
     renderer.add(events, frames[0].image, frames[0].timestamp_us)
+    assert renderer.render_count_frame().shape == (24, 32)
+    assert renderer.render_representation_panel(frames[0].image).shape == (24, 32 * 4, 3)
     renderer.maybe_write(frames[1].timestamp_us)
     renderer.close()
     assert output.exists()
@@ -67,3 +69,15 @@ def test_video_source_and_renderer(tmp_path: Path):
     assert capture.isOpened()
     assert int(capture.get(cv2.CAP_PROP_FRAME_COUNT)) >= 1
     capture.release()
+
+
+def test_summary_reports_active_and_input_event_rates():
+    events = np.array(
+        [(400_000, 1, 1, 1), (600_000, 1, 1, -1)], dtype=EVENT_DTYPE
+    )
+    summary = EventStream(events).summary(input_duration_us=1_000_000)
+    assert summary["active_event_duration_s"] == 0.2
+    assert summary["input_duration_s"] == 1.0
+    assert summary["event_rate_over_active_hz"] == 10.0
+    assert summary["event_rate_over_input_hz"] == 2.0
+    assert summary["event_rate_hz"] == summary["event_rate_over_active_hz"]

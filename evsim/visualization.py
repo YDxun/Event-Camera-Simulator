@@ -84,6 +84,36 @@ class EventVideoRenderer:
         image[mask] = blended[mask]
         return image
 
+    def render_binary_frame(self) -> np.ndarray:
+        return self.render_event_frame()
+
+    def render_count_frame(self) -> np.ndarray:
+        counts = self.on_count + self.off_count
+        return np.clip(counts * 32, 0, 255).astype(np.uint8)
+
+    def render_representation_panel(self, frame: np.ndarray) -> np.ndarray:
+        if frame.ndim == 2:
+            original = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+        else:
+            original = frame.copy()
+        binary = self.render_binary_frame()
+        count = cv2.cvtColor(self.render_count_frame(), cv2.COLOR_GRAY2BGR)
+        overlay = self.render_overlay(frame)
+        panel = np.hstack((original, binary, count, overlay))
+        labels = ("Input", "Binary events", "Event count", "Overlay")
+        for index, label in enumerate(labels):
+            cv2.putText(
+                panel,
+                label,
+                (index * self.width + 8, 22),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.55,
+                (0, 255, 0),
+                1,
+                cv2.LINE_AA,
+            )
+        return panel
+
     def render_combined_panel(self, frame: np.ndarray) -> np.ndarray:
         if frame.ndim == 2:
             original = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)

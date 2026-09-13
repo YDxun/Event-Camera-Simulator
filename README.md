@@ -208,11 +208,14 @@ python scripts/run_experiments.py
 
 This produces:
 
-- threshold sweep and visualization,
+- analytic timestamp and asymmetric-threshold checks,
+- threshold sweep and `N ~ 1/C` normalization,
 - FPS convergence experiment,
-- threshold-noise/background-noise ablation,
+- four-level simplified sensor non-ideality ablation,
+- accumulated representation comparison at 1/5/10/20 ms,
+- direct-log versus gamma-linearized preprocessing,
 - vectorized versus pixel-loop benchmark,
-- analytic event-model checks.
+- generated final report in `results_python/REPORT.md`.
 
 ## Assumptions and limitations
 
@@ -223,3 +226,60 @@ This produces:
 - Background activity is a simple Poisson/Bernoulli approximation.
 - The source video is gamma encoded by default; linearization can be enabled
   but the actual camera response curve is generally unknown.
+
+## Timestamp and refractory conventions
+
+Event timestamps use floor quantization:
+
+```text
+t_q = floor(t_e / Delta t_q) * Delta t_q
+```
+
+This is intentionally floor quantization, not nearest rounding. Therefore two
+events may share the same quantized timestamp. The event-stream contract is
+non-decreasing time:
+
+```text
+t_(i+1) >= t_i
+```
+
+not strictly increasing time. Refractory suppression is applied after
+quantization:
+
+```text
+continuous crossing time -> floor quantization -> refractory check
+```
+
+Consequently, the refractory model operates on quantized output timestamps.
+
+Event statistics report two rates:
+
+- `event_rate_over_active_hz = N / (t_last_event - t_first_event)`
+- `event_rate_over_input_hz = N / input_duration`
+
+The legacy `event_rate_hz` field is retained as an alias of the active-duration
+rate. New analysis should use the explicit fields.
+
+## Modelling assumptions
+
+- `A1`: Log intensity is piecewise linear between consecutive input frames.
+- `A2`: Pixels generate events independently.
+- `A3`: Events are triggered by the contrast-threshold model `Delta L = +/- C`.
+- `A4`: Threshold mismatch is a fixed per-pixel Gaussian offset.
+- `A5`: Background activity is a simplified Poisson process.
+- `A6`: Readout arbitration and transistor-level circuitry are not simulated.
+- `A7`: Information already lost in the source video, such as motion blur,
+  temporal aliasing or saturation, cannot be recovered.
+
+## Visualization representations
+
+The renderer supports:
+
+- input frame;
+- binary event frame (`ON=red`, `OFF=blue`, both=magenta);
+- event-count frame;
+- overlay frame;
+- side-by-side illustrative panels.
+
+The accumulation window only changes visualization. It never changes the raw
+event stream or event timestamps.

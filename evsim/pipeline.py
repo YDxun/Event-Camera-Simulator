@@ -47,6 +47,8 @@ def simulate_source(
         raise RuntimeError("Input contains no frames")
     simulator.initialize(first.image, first.timestamp_us)
     frames_processed = 1
+    first_timestamp_us = first.timestamp_us
+    last_timestamp_us = first.timestamp_us
     if renderer is not None:
         renderer.add(empty_events(), first.image, first.timestamp_us)
 
@@ -66,6 +68,7 @@ def simulate_source(
         if limit is not None and frames_processed >= limit:
             break
         pair = simulator.process(frame.image, frame.timestamp_us)
+        last_timestamp_us = frame.timestamp_us
         parts.append(pair.events)
         if renderer is not None:
             renderer.add(pair.events, frame.image, frame.timestamp_us)
@@ -82,7 +85,7 @@ def simulate_source(
     events = np.concatenate(parts) if parts else empty_events()
     stream = EventStream(events)
     elapsed = time.perf_counter() - started
-    stats = stream.summary()
+    stats = stream.summary(input_duration_us=last_timestamp_us - first_timestamp_us)
     stats["frames_processed"] = frames_processed
     stats["width"] = source.width
     stats["height"] = source.height

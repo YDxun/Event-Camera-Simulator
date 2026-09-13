@@ -24,10 +24,29 @@
         }
       },
       {
-        "name": "timestamp_quantization",
+        "name": "analytical_timestamp_alignment",
         "passed": true,
         "details": {
-          "events": 34
+          "expected_events": 48,
+          "actual_events": 48,
+          "timestamp_mae_us": 0.5,
+          "timestamp_max_error_us": 1
+        }
+      },
+      {
+        "name": "asymmetric_threshold_validation",
+        "passed": true,
+        "details": {
+          "positive_events": 46,
+          "negative_events": 23
+        }
+      },
+      {
+        "name": "timestamp_quantization_floor_and_duplicates",
+        "passed": true,
+        "details": {
+          "events": 34,
+          "duplicate_timestamp_bins": 24
         }
       },
       {
@@ -35,6 +54,22 @@
         "passed": true,
         "details": {
           "events": 9
+        }
+      },
+      {
+        "name": "quantization_and_refractory_order",
+        "passed": true,
+        "details": {
+          "events": 10,
+          "duplicate_bins": 0
+        }
+      },
+      {
+        "name": "dark_and_saturation_edge_cases",
+        "passed": true,
+        "details": {
+          "black_log_finite": true,
+          "near_saturation_events": 0
         }
       },
       {
@@ -49,75 +84,83 @@
   },
   "benchmark": {
     "vectorized": {
-      "elapsed_s": 0.5149047000159044,
-      "frames_per_s": 56.321101747768566,
-      "mega_pixel_frames_per_s": 0.3892914552805763,
+      "elapsed_s": 0.4685851999965962,
+      "frames_per_s": 61.88842498698349,
+      "mega_pixel_frames_per_s": 0.42777279351002984,
       "events": 889455
     },
     "loop": {
-      "elapsed_s": 8.902471700013848,
-      "frames_per_s": 3.2575222901247627,
-      "mega_pixel_frames_per_s": 0.02251599406934236,
+      "elapsed_s": 9.274857699987479,
+      "frames_per_s": 3.1267326074489694,
+      "mega_pixel_frames_per_s": 0.021611975782687278,
       "events": 889455
     },
-    "speedup_loop_over_vectorized": 17.289552221486556
+    "speedup_loop_over_vectorized": 19.79332189760763
   },
   "threshold_sweep": [
     {
       "threshold": 0.1,
       "event_count": 256211,
-      "event_rate_hz": 1546934.3396226414
+      "event_rate_over_input_hz": 1546934.3396226414,
+      "count_times_threshold": 25621.100000000002
     },
     {
       "threshold": 0.15,
       "event_count": 156546,
-      "event_rate_hz": 945183.3962264152
+      "event_rate_over_input_hz": 945183.3962264152,
+      "count_times_threshold": 23481.899999999998
     },
     {
       "threshold": 0.2,
       "event_count": 114563,
-      "event_rate_hz": 691701.1320754717
-    },
-    {
-      "threshold": 0.25,
-      "event_count": 89068,
-      "event_rate_hz": 537769.0566037736
+      "event_rate_over_input_hz": 691701.1320754717,
+      "count_times_threshold": 22912.600000000002
     },
     {
       "threshold": 0.3,
       "event_count": 72298,
-      "event_rate_hz": 436516.22641509434
+      "event_rate_over_input_hz": 436516.22641509434,
+      "count_times_threshold": 21689.399999999998
     },
     {
       "threshold": 0.4,
       "event_count": 51748,
-      "event_rate_hz": 312440.75471698114
+      "event_rate_over_input_hz": 312440.75471698114,
+      "count_times_threshold": 20699.2
     }
   ],
   "noise_ablation": [
     {
-      "variant": "ideal",
+      "variant": "A_ideal",
       "event_count": 69767,
       "on_events": 34221,
-      "off_events": 35546
+      "off_events": 35546,
+      "on_off_ratio": 0.9627243571709897,
+      "event_rate_over_input_hz": 421234.7169811321
     },
     {
-      "variant": "threshold_variation",
+      "variant": "B_threshold_mismatch",
       "event_count": 71051,
       "on_events": 34823,
-      "off_events": 36228
+      "off_events": 36228,
+      "on_off_ratio": 0.9612178425527217,
+      "event_rate_over_input_hz": 428987.1698113208
     },
     {
-      "variant": "background",
-      "event_count": 69865,
-      "on_events": 34272,
-      "off_events": 35593
-    },
-    {
-      "variant": "combined",
+      "variant": "C_threshold_plus_background",
       "event_count": 71150,
       "on_events": 34865,
-      "off_events": 36285
+      "off_events": 36285,
+      "on_off_ratio": 0.960865371365578,
+      "event_rate_over_input_hz": 429584.90566037735
+    },
+    {
+      "variant": "D_plus_refractory",
+      "event_count": 66744,
+      "on_events": 32879,
+      "off_events": 33865,
+      "on_off_ratio": 0.9708843939170235,
+      "event_rate_over_input_hz": 402982.641509434
     }
   ],
   "fps_sweep": [
@@ -125,37 +168,77 @@
       "fps": 120,
       "event_count": 35,
       "count_error_vs_3840": -3,
+      "relative_count_difference_vs_3840": 0.07894736842105263,
       "timing_rmse_us_vs_3840": 38967.87495983986
     },
     {
       "fps": 240,
       "event_count": 37,
       "count_error_vs_3840": -1,
+      "relative_count_difference_vs_3840": 0.02631578947368421,
       "timing_rmse_us_vs_3840": 1363.3555285754694
     },
     {
       "fps": 480,
       "event_count": 38,
       "count_error_vs_3840": 0,
+      "relative_count_difference_vs_3840": 0.0,
       "timing_rmse_us_vs_3840": 790.4638212034622
     },
     {
       "fps": 960,
       "event_count": 38,
       "count_error_vs_3840": 0,
+      "relative_count_difference_vs_3840": 0.0,
       "timing_rmse_us_vs_3840": 326.46648897100084
     },
     {
       "fps": 1920,
       "event_count": 38,
       "count_error_vs_3840": 0,
+      "relative_count_difference_vs_3840": 0.0,
       "timing_rmse_us_vs_3840": 136.23200025961904
     },
     {
       "fps": 3840,
       "event_count": 38,
       "count_error_vs_3840": 0,
+      "relative_count_difference_vs_3840": 0.0,
       "timing_rmse_us_vs_3840": 0.0
+    }
+  ],
+  "accumulation_window": [
+    {
+      "accumulation_time_us": 1000,
+      "event_count": 812,
+      "active_pixels": 157
+    },
+    {
+      "accumulation_time_us": 5000,
+      "event_count": 4804,
+      "active_pixels": 1343
+    },
+    {
+      "accumulation_time_us": 10000,
+      "event_count": 9088,
+      "active_pixels": 2125
+    },
+    {
+      "accumulation_time_us": 20000,
+      "event_count": 17676,
+      "active_pixels": 3180
+    }
+  ],
+  "linearization_comparison": [
+    {
+      "variant": "direct_log",
+      "event_count": 114527,
+      "event_rate_over_input_hz": 923915.294117647
+    },
+    {
+      "variant": "gamma_linearized",
+      "event_count": 304904,
+      "event_rate_over_input_hz": 2459729.74789916
     }
   ]
 }

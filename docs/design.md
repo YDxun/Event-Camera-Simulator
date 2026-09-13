@@ -107,3 +107,37 @@ Accepted background events undergo the same refractory check but do not change
 6. Verify timestamp quantization and refractory behavior.
 7. Verify the vectorized result exactly matches the independent pixel loop.
 8. Verify input, output and rendering through integration tests.
+
+## Temporal conventions
+
+The simulator uses floor timestamp quantization:
+
+```text
+t_q = floor(t_e / Delta t_q) * Delta t_q
+```
+
+The internal crossing time is continuous, but the emitted stream is discrete.
+Equal timestamps are valid, so the stream is non-decreasing rather than strictly
+increasing. Refractory suppression is applied after quantization.
+
+## Statistics definitions
+
+The active event rate and input-duration event rate have different meanings:
+
+```text
+event_rate_over_active_hz = N / (t_last_event - t_first_event)
+event_rate_over_input_hz  = N / (t_last_frame - t_first_frame)
+```
+
+Both are reported. The `event_rate_hz` compatibility field aliases the active
+rate.
+
+## Explicit assumptions
+
+1. Log intensity is piecewise-linear between consecutive frames.
+2. Pixels are independent.
+3. The threshold comparison is against `L_ref`, not the previous frame.
+4. Threshold mismatch is fixed for the sequence.
+5. Background activity uses a simplified Poisson process.
+6. Readout arbitration and transistor-level circuits are outside scope.
+7. Motion blur, temporal aliasing and saturation in the source cannot be undone.

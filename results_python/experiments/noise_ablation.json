@@ -1,26 +1,34 @@
 [
   {
-    "variant": "ideal",
+    "variant": "A_ideal",
     "event_count": 69767,
     "on_events": 34221,
-    "off_events": 35546
+    "off_events": 35546,
+    "on_off_ratio": 0.9627243571709897,
+    "event_rate_over_input_hz": 421234.7169811321
   },
   {
-    "variant": "threshold_variation",
+    "variant": "B_threshold_mismatch",
     "event_count": 71051,
     "on_events": 34823,
-    "off_events": 36228
+    "off_events": 36228,
+    "on_off_ratio": 0.9612178425527217,
+    "event_rate_over_input_hz": 428987.1698113208
   },
   {
-    "variant": "background",
-    "event_count": 69865,
-    "on_events": 34272,
-    "off_events": 35593
-  },
-  {
-    "variant": "combined",
+    "variant": "C_threshold_plus_background",
     "event_count": 71150,
     "on_events": 34865,
-    "off_events": 36285
+    "off_events": 36285,
+    "on_off_ratio": 0.960865371365578,
+    "event_rate_over_input_hz": 429584.90566037735
+  },
+  {
+    "variant": "D_plus_refractory",
+    "event_count": 66744,
+    "on_events": 32879,
+    "off_events": 33865,
+    "on_off_ratio": 0.9708843939170235,
+    "event_rate_over_input_hz": 402982.641509434
   }
 ]

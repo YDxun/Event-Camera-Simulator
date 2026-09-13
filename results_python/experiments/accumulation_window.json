@@ -1,0 +1,22 @@
+[
+  {
+    "accumulation_time_us": 1000,
+    "event_count": 812,
+    "active_pixels": 157
+  },
+  {
+    "accumulation_time_us": 5000,
+    "event_count": 4804,
+    "active_pixels": 1343
+  },
+  {
+    "accumulation_time_us": 10000,
+    "event_count": 9088,
+    "active_pixels": 2125
+  },
+  {
+    "accumulation_time_us": 20000,
+    "event_count": 17676,
+    "active_pixels": 3180
+  }
+]
