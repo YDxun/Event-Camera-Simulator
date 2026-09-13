@@ -94,6 +94,7 @@ def _build_config(
     linearization: bool,
     accumulation_time_us: int,
     max_frames: int,
+    fallback_fps: float | None = None,
 ) -> SimulatorConfig:
     preset_path = ROOT / "configs" / ("ideal.json" if preset == "Ideal" else "realistic.json")
     config = SimulatorConfig.load(preset_path)
@@ -105,6 +106,8 @@ def _build_config(
     config.noise.threshold_sigma = 0.03 if threshold_variation else 0.0
     config.noise.background_rate_hz = 0.05 if background_activity else 0.0
     config.input.linearize = linearization
+    if fallback_fps is not None:
+        config.input.fallback_fps = fallback_fps
     config.visualization.accumulation_time_us = accumulation_time_us
     config.runtime.max_frames = max_frames
     config.runtime.progress = False
@@ -139,6 +142,7 @@ def _run_ui_simulation(
             progress=False,
             renderer=renderer,
         )
+        result.statistics["source_fps"] = source.fps
     finally:
         source.close()
     result.event_stream.save_npz(config.output.npz_path)
@@ -237,6 +241,15 @@ def main() -> None:
         ["Built-in 960 FPS demo", "Upload video", "Upload image-sequence ZIP"],
         horizontal=True,
     )
+    timestamp_mode = st.radio(
+        "Input timestamp mode",
+        ["Use source timing", "Override fallback FPS"],
+        horizontal=True,
+        help=(
+            "Video FPS metadata and valid ts_frame.txt files remain authoritative. "
+            "Override applies only to image sequences without timestamps."
+        ),
+    )
 
     with st.form("simulation_form"):
         uploaded_video = None
@@ -273,8 +286,17 @@ def main() -> None:
                 "Background activity", value=bool(defaults[5])
             )
             accumulation_ms = st.select_slider(
-                "Accumulation window (ms)", [1, 5, 10, 20], value=int(defaults[7])
+                "Visualization window (ms)", [1, 5, 10, 20], value=int(defaults[7])
             )
+            fallback_fps = None
+            if timestamp_mode == "Override fallback FPS":
+                fallback_fps = st.number_input(
+                    "Fallback FPS for sequences without timestamps",
+                    min_value=1.0,
+                    max_value=10000.0,
+                    value=960.0,
+                    step=10.0,
+                )
 
         with st.expander("Execution control"):
             max_frames = st.number_input(
@@ -302,6 +324,7 @@ def main() -> None:
                 linearization=linearization,
                 accumulation_time_us=int(accumulation_ms) * 1000,
                 max_frames=int(max_frames),
+                fallback_fps=fallback_fps,
             )
             with st.spinner("Running event simulation..."):
                 input_playback_path = None
@@ -334,6 +357,8 @@ def main() -> None:
                 "source_mode": source_mode,
                 "accumulation_ms": int(accumulation_ms),
                 "preset": preset,
+                "timestamp_mode": timestamp_mode,
+                "fallback_fps": fallback_fps,
             }
         except Exception as exc:
             st.error(f"Simulation failed: {exc}")
@@ -364,22 +389,35 @@ def main() -> None:
     metric_cols[1].metric("ON", f"{int(stats.get('on_events', 0)):,}")
     metric_cols[2].metric("OFF", f"{int(stats.get('off_events', 0)):,}")
     metric_cols[3].metric("Event rate", f"{event_rate:,.1f} kEvents/s")
-    processing_cols = st.columns(3)
+    processing_cols = st.columns(4)
     processing_cols[0].metric(
         "Processing", f"{float(stats.get('processing_fps', 0.0)):,.1f} FPS"
     )
+    source_fps = stats.get("source_fps")
     processing_cols[1].metric(
-        "Input duration", f"{float(stats.get('input_duration_s', 0.0)):,.4f} s"
+        "Source FPS", f"{float(source_fps):,.1f}" if source_fps else "n/a"
     )
     processing_cols[2].metric(
-        "Timestamp resolution", f"{ui_result['accumulation_ms']} ms accumulation"
+        "Input duration", f"{float(stats.get('input_duration_s', 0.0)):,.4f} s"
     )
+    processing_cols[3].metric("Accumulation", f"{ui_result['accumulation_ms']} ms")
 
     st.caption(
         f"Preset: {ui_result['preset']} | source: {ui_result['source_mode']} | "
-        "Lower thresholds produce more events; larger accumulation windows "
-        "produce denser visualizations without changing raw events."
+        f"timestamp mode: {ui_result['timestamp_mode']} | "
+        "Lower thresholds produce more events; larger visualization windows "
+        "produce denser event frames without changing raw events."
     )
+
+    with st.expander("Model / Physics"):
+        st.latex(r"L(x,y,t)=\log(I(x,y,t)+\epsilon)")
+        st.latex(r"\Delta L=L-L_{ref}")
+        st.markdown(
+            "**ON:** $\\Delta L \\ge C_+$  \n"
+            "**OFF:** $\\Delta L \\le -C_-$  \n"
+            "The raw event stream depends only on source timing, thresholds and pixel state; "
+            "the visualization window changes rendering only."
+        )
 
     video_path = Path(ui_result["video_path"])
     playback_cols = st.columns(2)

@@ -58,6 +58,7 @@ def test_ui_config_builds_expected_non_ideal_parameters():
         linearization=False,
         accumulation_time_us=5_000,
         max_frames=12,
+        fallback_fps=480.0,
     )
     assert config.sensor.positive_threshold == 0.25
     assert config.sensor.negative_threshold == 0.15
@@ -66,6 +67,7 @@ def test_ui_config_builds_expected_non_ideal_parameters():
     assert config.noise.enable_threshold_variation
     assert config.noise.background_rate_hz == 0.05
     assert config.runtime.max_frames == 12
+    assert config.input.fallback_fps == 480.0
 
 
 def test_ui_zip_extraction_rejects_path_traversal(tmp_path: Path):
