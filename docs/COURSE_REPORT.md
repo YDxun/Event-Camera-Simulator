@@ -151,7 +151,7 @@ Implemented extensions include:
 
 ## 6. Validation
 
-The validation suite contains 18 passing tests and a separate analytical
+The validation suite contains 19 passing tests and a separate analytical
 verification command. The analytical test generates 48 expected threshold
 crossings from a single-pixel ramp. The simulator generates 48 events with:
 

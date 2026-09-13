@@ -99,6 +99,13 @@ class VideoSource(FrameSource):
             raise RuntimeError(f"Failed to open video: {self.path}")
         self.width = int(self.capture.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.height = int(self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        if self.width <= 0 or self.height <= 0:
+            ok, first_frame = self.capture.read()
+            if ok and first_frame is not None and first_frame.size > 0:
+                self.height, self.width = first_frame.shape[:2]
+            self.capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+        if self.width <= 0 or self.height <= 0:
+            raise RuntimeError(f"Cannot determine video resolution: {self.path}")
         fps = float(self.capture.get(cv2.CAP_PROP_FPS))
         self.fps = fps if fps > 0 else float(fallback_fps)
         declared = int(self.capture.get(cv2.CAP_PROP_FRAME_COUNT))

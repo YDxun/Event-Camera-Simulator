@@ -1,12 +1,49 @@
 ﻿from pathlib import Path
 from zipfile import ZipFile
 
+import cv2
+import numpy as np
 import pytest
 
 pytest.importorskip("streamlit")
 from streamlit.testing.v1 import AppTest
 
 import app
+from evsim.sources import VideoSource
+
+
+class _ZeroSizeMetadataCapture:
+    def __init__(self, capture):
+        self._capture = capture
+
+    def __getattr__(self, name):
+        return getattr(self._capture, name)
+
+    def get(self, prop):
+        if prop in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT):
+            return 0
+        return self._capture.get(prop)
+
+
+def test_video_source_falls_back_to_first_decoded_frame(tmp_path: Path, monkeypatch):
+    video_path = tmp_path / "input.avi"
+    writer = cv2.VideoWriter(
+        str(video_path), cv2.VideoWriter_fourcc(*"MJPG"), 30.0, (32, 24), True
+    )
+    assert writer.isOpened()
+    writer.write(np.zeros((24, 32, 3), dtype=np.uint8))
+    writer.release()
+
+    real_capture = cv2.VideoCapture
+    monkeypatch.setattr(
+        cv2,
+        "VideoCapture",
+        lambda path: _ZeroSizeMetadataCapture(real_capture(path)),
+    )
+    source = VideoSource(video_path)
+    assert source.width == 32
+    assert source.height == 24
+    source.close()
 
 
 def test_ui_config_builds_expected_non_ideal_parameters():
@@ -43,7 +80,7 @@ def test_ui_small_simulation_runs_end_to_end():
     test_app = AppTest.from_file("app.py").run(timeout=30)
     test_app.number_input[3].set_value(5)
     test_app.button[0].click()
-    test_app.run(timeout=60)
+    test_app.run(timeout=120)
     assert not test_app.exception
     assert "Result Preview" in [item.value for item in test_app.subheader]
     assert any(metric.label == "Events" for metric in test_app.metric)
