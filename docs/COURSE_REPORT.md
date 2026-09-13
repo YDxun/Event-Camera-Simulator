@@ -146,11 +146,12 @@ Implemented extensions include:
 - optional gamma linearization;
 - binary event, event-count and overlay representations;
 - configurable event accumulation window;
-- CSV, NPZ and illustrative AVI output.
+- CSV, NPZ and illustrative video output;
+- a lightweight Streamlit demo that calls the same simulator core as the CLI.
 
 ## 6. Validation
 
-The validation suite contains 15 passing tests and a separate analytical
+The validation suite contains 18 passing tests and a separate analytical
 verification command. The analytical test generates 48 expected threshold
 crossings from a single-pixel ramp. The simulator generates 48 events with:
 

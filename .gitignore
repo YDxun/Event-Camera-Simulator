@@ -12,3 +12,4 @@ dist/
 htmlcov/
 .idea/
 .DS_Store
+.streamlit/

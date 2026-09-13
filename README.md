@@ -298,3 +298,25 @@ event stream or event timestamps.
 - `docs/COURSE_REPORT.md`: research-style motivation/model/framework/results report.
 - `docs/AI_USE_AND_REVIEW_REPORT.md`: draft AI-use and verification report.
 - `results_python/REPORT.md`: generated engineering validation report.
+
+## Interactive UI
+
+A lightweight Streamlit UI is included in `app.py`. It uses the same `evsim`
+core as the CLI and does not duplicate simulator logic.
+
+```bash
+python -m pip install -e ".[ui]"
+python -m streamlit run app.py
+```
+
+The UI supports:
+
+- built-in 960 FPS demo, uploaded video and image-sequence ZIP;
+- Ideal and Enhanced presets;
+- `C+`, `C-`, timestamp resolution, refractory period and accumulation window;
+- threshold variation, background activity and linearization toggles;
+- side-by-side Input / Events / Overlay preview;
+- event video, event statistics and NPZ download.
+
+Changing `C` immediately changes event density. Changing the accumulation
+window changes only the visualization density and never changes raw events.
