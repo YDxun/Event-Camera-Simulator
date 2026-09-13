@@ -62,14 +62,20 @@ remains in the same order of magnitude, consistent with `N ~ 1/C`.
 
 ## FPS convergence
 
-| FPS | Events | Relative count diff | Timestamp RMSE vs 3840 FPS |
-|---:|---:|---:|---:|
-| 120 | 35 | 0.0789 | 38967.875 us |
-| 240 | 37 | 0.0263 | 1363.356 us |
-| 480 | 38 | 0.0000 | 790.464 us |
-| 960 | 38 | 0.0000 | 326.466 us |
-| 1920 | 38 | 0.0000 | 136.232 us |
-| 3840 | 38 | 0.0000 | 0.000 us |
+| FPS | Events | Relative count diff | Matched | Unmatched | Timestamp RMSE vs 3840 FPS |
+|---:|---:|---:|---:|---:|---:|
+| 120 | 35 | 0.0789 | 35 | 3 | 2221.108 us |
+| 240 | 37 | 0.0263 | 37 | 1 | 1363.356 us |
+| 480 | 38 | 0.0000 | 38 | 0 | 790.464 us |
+| 960 | 38 | 0.0000 | 38 | 0 | 326.466 us |
+| 1920 | 38 | 0.0000 | 38 | 0 | 136.232 us |
+| 3840 | 38 | 0.0000 | 38 | 0 | 0.000 us |
+
+Matching method: events are aligned separately by polarity using an
+order-preserving dynamic-programming sequence alignment. The match cost
+is absolute timestamp difference and the insertion/deletion penalty is
+5000 us. RMSE is computed only over matched pairs; unmatched events are
+reported explicitly and excluded from RMSE.
 
 The timestamp error decreases as input FPS increases under the
 piecewise-linear interpolation assumption.
@@ -111,10 +117,10 @@ radiometric calibration.
 
 | Backend | Runtime (s) | Frames/s | MPixel-frames/s | Events |
 |---|---:|---:|---:|---:|
-| vectorized | 0.469 | 61.89 | 0.4278 | 889,455 |
-| loop | 9.275 | 3.13 | 0.0216 | 889,455 |
+| vectorized | 0.427 | 67.96 | 0.4698 | 889,455 |
+| loop | 5.318 | 5.45 | 0.0377 | 889,455 |
 
-Measured speedup `T_loop / T_vectorized = 19.79x`.
+Measured speedup `T_loop / T_vectorized = 12.46x`.
 
 ## Assumptions and limitations
 

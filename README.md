@@ -1,4 +1,4 @@
-﻿# Python Event Camera Simulator (`evsim`)
+# Python Event Camera Simulator (`evsim`)
 
 A configurable, explainable and verifiable event-camera simulator written in Python.
 It converts high-FPS grayscale/video frames into asynchronous event streams
@@ -97,7 +97,9 @@ When the change is larger than several thresholds, several events are generated
 between the two input frames. The number is calculated with:
 
 ```text
-N = floor(abs(L1 - L_ref) / C)
+N_plus  = floor(max(L1 - L_ref, 0) / C_plus)
+N_minus = floor(max(L_ref - L1, 0) / C_minus)
+N = N_plus + N_minus
 ```
 
 Refractory suppression rejects an event if:
@@ -152,13 +154,18 @@ Inspect an input without running simulation:
 python -m evsim inspect --input path/to/video_or_sequence
 ```
 
+
+
+The analytical checks verify consistency with the implemented mathematical
+model. They are not a validation against a physical event-camera sensor.
+
 ## Configuration
 
 Two ready-to-use configurations are included:
 
 - `configs/ideal.json`: deterministic model, no noise, no refractory period.
-- `configs/realistic.json`: asymmetric thresholds, threshold variation,
-  background activity, linearization and refractory period.
+- `configs/realistic.json`: enhanced non-ideal model with asymmetric thresholds,
+  threshold variation, background activity, linearization and refractory period.
 
 Important parameters:
 
@@ -283,3 +290,11 @@ The renderer supports:
 
 The accumulation window only changes visualization. It never changes the raw
 event stream or event timestamps.
+
+## Documentation
+
+- `docs/design.md`: implemented architecture and simulator conventions.
+- `docs/RELATED_WORK.md`: comparison with the event-camera dataset simulator, ESIM and v2e.
+- `docs/COURSE_REPORT.md`: research-style motivation/model/framework/results report.
+- `docs/AI_USE_AND_REVIEW_REPORT.md`: draft AI-use and verification report.
+- `results_python/REPORT.md`: generated engineering validation report.

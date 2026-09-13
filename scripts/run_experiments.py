@@ -38,6 +38,67 @@ def ideal_config() -> SimulatorConfig:
     config.runtime.progress = False
     return config
 
+def align_event_times(
+    events: np.ndarray,
+    reference: np.ndarray,
+    gap_penalty_us: float = 5_000.0,
+) -> tuple[np.ndarray, np.ndarray, int]:
+    """Order-preserving per-polarity alignment used for timestamp RMSE."""
+
+    matched_actual: list[float] = []
+    matched_reference: list[float] = []
+    unmatched = 0
+    for polarity in (-1, 1):
+        actual_times = events["timestamp_us"][events["polarity"] == polarity].astype(np.float64)
+        reference_times = reference["timestamp_us"][reference["polarity"] == polarity].astype(np.float64)
+        n = len(actual_times)
+        m = len(reference_times)
+        if n == 0 or m == 0:
+            unmatched += n + m
+            continue
+        cost = np.full((n + 1, m + 1), np.inf, dtype=np.float64)
+        back = np.zeros((n + 1, m + 1), dtype=np.int8)
+        cost[0, 0] = 0.0
+        for i in range(1, n + 1):
+            cost[i, 0] = i * gap_penalty_us
+            back[i, 0] = 1
+        for j in range(1, m + 1):
+            cost[0, j] = j * gap_penalty_us
+            back[0, j] = 2
+        for i in range(1, n + 1):
+            for j in range(1, m + 1):
+                candidates = (
+                    cost[i - 1, j - 1] + abs(actual_times[i - 1] - reference_times[j - 1]),
+                    cost[i - 1, j] + gap_penalty_us,
+                    cost[i, j - 1] + gap_penalty_us,
+                )
+                choice = int(np.argmin(candidates))
+                cost[i, j] = candidates[choice]
+                back[i, j] = choice
+        i, j = n, m
+        local_actual: list[int] = []
+        local_reference: list[int] = []
+        while i > 0 or j > 0:
+            choice = int(back[i, j])
+            if choice == 0:
+                local_actual.append(i - 1)
+                local_reference.append(j - 1)
+                i -= 1
+                j -= 1
+            elif choice == 1:
+                i -= 1
+            else:
+                j -= 1
+        matched_actual.extend(actual_times[index] for index in reversed(local_actual))
+        matched_reference.extend(reference_times[index] for index in reversed(local_reference))
+        unmatched += (n - len(local_actual)) + (m - len(local_reference))
+    return (
+        np.asarray(matched_actual, dtype=np.float64),
+        np.asarray(matched_reference, dtype=np.float64),
+        unmatched,
+    )
+
+
 def threshold_sweep(output_dir: Path) -> list[dict[str, float]]:
     thresholds = [0.10, 0.15, 0.20, 0.30, 0.40]
     frames = 160
@@ -245,10 +306,12 @@ def fps_sweep(output_dir: Path) -> list[dict[str, float]]:
     for fps in fps_values:
         events = run(fps)
         count_error = len(events) - len(reference)
-        overlap = min(len(events), len(reference))
-        if overlap:
+        matched_actual, matched_reference, unmatched = align_event_times(
+            events, reference
+        )
+        if matched_actual.size:
             timing_rmse_us = float(
-                np.sqrt(np.mean((events["timestamp_us"][:overlap] - reference["timestamp_us"][:overlap]) ** 2))
+                np.sqrt(np.mean((matched_actual - matched_reference) ** 2))
             )
         else:
             timing_rmse_us = float("nan")
@@ -261,6 +324,8 @@ def fps_sweep(output_dir: Path) -> list[dict[str, float]]:
                 "event_count": len(events),
                 "count_error_vs_3840": count_error,
                 "relative_count_difference_vs_3840": relative_count_difference,
+                "matched_events": int(matched_actual.size),
+                "unmatched_events": int(unmatched),
                 "timing_rmse_us_vs_3840": timing_rmse_us,
             }
         )
@@ -273,15 +338,17 @@ def fps_sweep(output_dir: Path) -> list[dict[str, float]]:
                     row["event_count"],
                     row["count_error_vs_3840"],
                     row["relative_count_difference_vs_3840"],
+                    row["matched_events"],
+                    row["unmatched_events"],
                     row["timing_rmse_us_vs_3840"],
                 ]
                 for row in rows
             ]
         ),
         delimiter=",",
-        header="fps,event_count,count_error_vs_3840,relative_count_difference_vs_3840,timing_rmse_us_vs_3840",
+        header="fps,event_count,count_error_vs_3840,relative_count_difference_vs_3840,matched_events,unmatched_events,timing_rmse_us_vs_3840",
         comments="",
-        fmt=["%d", "%d", "%d", "%.6f", "%.6f"],
+        fmt=["%d", "%d", "%d", "%.6f", "%d", "%d", "%.6f"],
     )
     fps = np.array([row["fps"] for row in rows])
     rmse = np.array([row["timing_rmse_us_vs_3840"] for row in rows])
@@ -375,14 +442,21 @@ def write_markdown_report(output_dir: Path, summary: dict) -> Path:
     lines.append("")
     lines.append("## FPS convergence")
     lines.append("")
-    lines.append("| FPS | Events | Relative count diff | Timestamp RMSE vs 3840 FPS |")
-    lines.append("|---:|---:|---:|---:|")
+    lines.append("| FPS | Events | Relative count diff | Matched | Unmatched | Timestamp RMSE vs 3840 FPS |")
+    lines.append("|---:|---:|---:|---:|---:|---:|")
     for row in summary["fps_sweep"]:
         lines.append(
             f"| {row['fps']} | {row['event_count']} | "
             f"{row['relative_count_difference_vs_3840']:.4f} | "
+            f"{row['matched_events']} | {row['unmatched_events']} | "
             f"{row['timing_rmse_us_vs_3840']:.3f} us |"
         )
+    lines.append("")
+    lines.append("Matching method: events are aligned separately by polarity using an")
+    lines.append("order-preserving dynamic-programming sequence alignment. The match cost")
+    lines.append("is absolute timestamp difference and the insertion/deletion penalty is")
+    lines.append("5000 us. RMSE is computed only over matched pairs; unmatched events are")
+    lines.append("reported explicitly and excluded from RMSE.")
     lines.append("")
     lines.append("The timestamp error decreases as input FPS increases under the")
     lines.append("piecewise-linear interpolation assumption.")
