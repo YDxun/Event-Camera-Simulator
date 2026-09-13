@@ -1,5 +1,7 @@
 # Python Event Camera Simulator (`evsim`)
 
+[![Deploy to Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/deploy?repository=https%3A%2F%2Fgithub.com%2FYDxun%2FEvent-Camera-Simulator&branch=main&mainModule=app.py)
+
 A configurable, explainable and verifiable event-camera simulator written in Python.
 It converts high-FPS grayscale/video frames into asynchronous event streams
 `(x, y, t, p)` using the log-intensity contrast-threshold model.
@@ -309,6 +311,8 @@ python -m pip install -e ".[ui]"
 python -m streamlit run app.py
 ```
 
+![Interactive UI parameter panel](docs/images/ui-parameters.png)
+
 The UI supports:
 
 - built-in 960 FPS demo, uploaded video and image-sequence ZIP;
@@ -318,5 +322,30 @@ The UI supports:
 - side-by-side Input / Events / Overlay preview;
 - browser-playable H.264 event video, event statistics and NPZ download.
 
+![Interactive simulation results](docs/images/ui-results.png)
+
 Changing `C` immediately changes event density. Changing the accumulation
 window changes only the visualization density and never changes raw events.
+
+### Video playback
+
+The input video and generated event video are converted to browser-compatible
+H.264 before being passed to Streamlit's video player.
+
+![UI video playback](docs/images/ui-video-playback.png)
+
+### Deploy to Streamlit Community Cloud
+
+The repository contains `.streamlit/config.toml`, `.python-version`, `app.py`,
+and deployment-ready root dependencies. To publish the UI:
+
+1. Open [Streamlit Community Cloud](https://share.streamlit.io/) and sign in with GitHub.
+2. Choose **Create app** / **Deploy an app**.
+3. Select repository `YDxun/Event-Camera-Simulator`.
+4. Select branch `main`.
+5. Set the main file path to `app.py`.
+6. Click **Deploy**.
+
+The first deployment requires the account owner to complete GitHub OAuth. Later
+pushes to `main` trigger automatic redeployment. The public app URL remains the
+same unless the app is deleted or renamed.
