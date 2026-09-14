@@ -16,6 +16,16 @@ from .visualization import EventVideoRenderer
 
 @dataclass
 class SimulationResult:
+    """Outcome and diagnostics of a simulation run.
+
+    Attributes:
+        event_stream: Sorted EventStream containing all generated events.
+        statistics: Dictionary of event count, rate, and timing metrics.
+        frames_processed: Number of video frames processed.
+        elapsed_seconds: Wall-clock duration of the simulation in seconds.
+        video_path: Path to the generated visualization video file, if enabled.
+    """
+
     event_stream: EventStream
     statistics: dict[str, Any]
     frames_processed: int
@@ -24,6 +34,7 @@ class SimulationResult:
 
     @property
     def events(self) -> np.ndarray:
+        """Convenience property accessing raw structured NumPy event array."""
         return self.event_stream.events
 
 
@@ -34,6 +45,18 @@ def simulate_source(
     progress: bool = True,
     renderer: EventVideoRenderer | None = None,
 ) -> SimulationResult:
+    """Execute the event simulation pipeline over an open FrameSource.
+
+    Args:
+        source: Active FrameSource instance (video or image sequence).
+        config: Simulation parameters and sensor model settings.
+        max_frames: Optional frame processing limit.
+        progress: Whether to display a tqdm progress bar in terminal.
+        renderer: Optional EventVideoRenderer to produce accumulation video.
+
+    Returns:
+        SimulationResult containing events, summary statistics, and timing.
+    """
     simulator = EventSimulator(config)
     parts: list[np.ndarray] = []
     frames_processed = 0
@@ -89,7 +112,9 @@ def simulate_source(
     stats["height"] = source.height
     stats["processing_fps"] = frames_processed / elapsed if elapsed > 0 else 0.0
     stats["pixel_frames_per_second"] = (
-        frames_processed * source.width * source.height / elapsed if elapsed > 0 else 0.0
+        frames_processed * source.width * source.height / elapsed
+        if elapsed > 0
+        else 0.0
     )
     result = SimulationResult(stream, stats, frames_processed, elapsed)
     if renderer is not None and renderer.actual_output_path is not None:
@@ -98,6 +123,15 @@ def simulate_source(
 
 
 def simulate_path(path: str | Path, config: SimulatorConfig) -> SimulationResult:
+    """Convenience wrapper to open a path and run the simulation pipeline.
+
+    Args:
+        path: Path to video file or image sequence directory.
+        config: SimulatorConfig controlling sensor, noise, and outputs.
+
+    Returns:
+        SimulationResult containing events and statistics.
+    """
     source = open_source(
         path,
         fallback_fps=config.input.fallback_fps,
@@ -115,6 +149,7 @@ def simulate_path(path: str | Path, config: SimulatorConfig) -> SimulationResult
 
 
 def source_metadata(path: str | Path, config: SimulatorConfig) -> dict[str, Any]:
+    """Inspect resolution, frame count, FPS, and timestamps for a given path."""
     return inspect_source(
         path,
         fallback_fps=config.input.fallback_fps,

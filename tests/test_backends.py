@@ -11,7 +11,8 @@ def run(backend: str, images: list[np.ndarray]) -> np.ndarray:
     sim = EventSimulator(config)
     sim.initialize(images[0], 0)
     parts = [
-        sim.process(image, index * 1000).events for index, image in enumerate(images[1:], start=1)
+        sim.process(image, index * 1000).events
+        for index, image in enumerate(images[1:], start=1)
     ]
     return np.concatenate(parts)
 

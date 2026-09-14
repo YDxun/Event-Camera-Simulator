@@ -34,7 +34,7 @@ selected key figures are included.
 
 - [ ] `python -m pytest -q`
 - [ ] `python -m evsim validate`
-- [ ] `python -m evsim demo --output-dir results_python/demo --fps 960 --seconds 1`
+- [ ] `python -m evsim demo --output-dir output/demo --fps 960 --seconds 1`
 - [ ] `python scripts/run_experiments.py`
 - [ ] Verify figure units and axis labels.
 - [ ] Explain that analytical validation is model-consistency validation, not real-sensor validation.

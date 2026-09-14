@@ -1,4 +1,19 @@
-"""Accumulated event visualization and illustrative video output."""
+"""Accumulated event visualization and illustrative video output.
+
+Visualization Model:
+--------------------
+Unlike traditional cameras where frames represent integrated radiance over exposure,
+event cameras produce sparse, asynchronous event streams. To visualize events:
+1. Events are accumulated over a sliding temporal window of duration Delta T_acc
+   (default: 10,000 us = 10 ms).
+2. Color encoding conventions in BGR (OpenCV format):
+   - Background (no events): Dark Gray (25, 25, 25)
+   - ON events (polarity = +1): Red (20, 80, 255)
+   - OFF events (polarity = -1): Blue (255, 80, 20)
+   - Simultaneous ON & OFF within window: Magenta (255, 0, 255)
+3. Accumulation affects only visualization displays and video output; the underlying
+   (x, y, t, p) event stream maintains exact microsecond timestamps.
+"""
 
 from pathlib import Path
 from typing import Self
@@ -10,7 +25,7 @@ from .config import VisualizationConfig
 
 
 class EventVideoRenderer:
-    """Accumulate events and render input/event/overlay panels."""
+    """Accumulate events and render input/event/overlay panels into video or previews."""
 
     def __init__(self, width: int, height: int, config: VisualizationConfig):
         self.width = width
@@ -26,6 +41,7 @@ class EventVideoRenderer:
         self.frames_written = 0
 
     def add(self, events: np.ndarray, frame: np.ndarray, timestamp_us: int) -> None:
+        """Accumulate events from a newly processed frame into the spatial histogram."""
         if events.size:
             x = events["x"].astype(np.intp)
             y = events["y"].astype(np.intp)
@@ -39,6 +55,7 @@ class EventVideoRenderer:
         self.last_frame = frame
 
     def maybe_write(self, timestamp_us: int) -> None:
+        """Write a video panel frame if the accumulation window duration has elapsed."""
         if self.window_start_us is None:
             return
         elapsed = int(timestamp_us) - self.window_start_us
@@ -46,6 +63,7 @@ class EventVideoRenderer:
             self.flush(timestamp_us)
 
     def flush(self, timestamp_us: int | None = None) -> None:
+        """Flush the accumulated events as a rendered video frame and reset accumulation."""
         if self.last_frame is None or self.writer is None:
             self.clear()
             return
@@ -58,12 +76,14 @@ class EventVideoRenderer:
             self.window_end_us = int(timestamp_us)
 
     def clear(self) -> None:
+        """Zero out the event accumulation buffers."""
         self.on_count.fill(0)
         self.off_count.fill(0)
         self.window_start_us = None
         self.window_end_us = None
 
     def render_event_frame(self) -> np.ndarray:
+        """Render a color-coded 2D event image (ON=red, OFF=blue, both=magenta) in BGR."""
         image = np.full((self.height, self.width, 3), 25, dtype=np.uint8)
         image[self.off_count > 0] = (255, 80, 20)
         image[self.on_count > 0] = (20, 80, 255)

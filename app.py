@@ -75,7 +75,9 @@ def _transcode_for_browser(source: Path, destination: Path) -> Path:
         text=True,
     )
     if completed.returncode != 0 or not destination.exists():
-        raise RuntimeError("FFmpeg H.264 conversion failed: " + completed.stderr[-1000:])
+        raise RuntimeError(
+            "FFmpeg H.264 conversion failed: " + completed.stderr[-1000:]
+        )
     return destination
 
 
@@ -92,7 +94,9 @@ def _build_config(
     max_frames: int,
     fallback_fps: float | None = None,
 ) -> SimulatorConfig:
-    preset_path = ROOT / "configs" / ("ideal.json" if preset == "Ideal" else "realistic.json")
+    preset_path = (
+        ROOT / "configs" / ("ideal.json" if preset == "Ideal" else "realistic.json")
+    )
     config = SimulatorConfig.load(preset_path)
     config.sensor.positive_threshold = positive_threshold
     config.sensor.negative_threshold = negative_threshold
@@ -207,7 +211,7 @@ def _prepare_input(
     workdir: Path,
 ) -> Path:
     if mode == "Built-in 960 FPS demo":
-        demo_path = ROOT / "results_python" / "demo" / "input_960fps.avi"
+        demo_path = ROOT / "output" / "demo" / "input_960fps.avi"
         if not demo_path.exists():
             write_synthetic_video(demo_path, 960.0, 1.0, 320, 240)
         return demo_path
@@ -269,7 +273,9 @@ def main() -> None:
                 [1, 10, 100, 1000],
                 index=[1, 10, 100, 1000].index(int(defaults[2])),
             )
-            threshold_variation = st.checkbox("Threshold variation", value=bool(defaults[4]))
+            threshold_variation = st.checkbox(
+                "Threshold variation", value=bool(defaults[4])
+            )
             linearization = st.checkbox("Linearization", value=bool(defaults[6]))
         with right:
             negative_threshold = st.number_input(
@@ -278,7 +284,9 @@ def main() -> None:
             refractory_period_us = st.number_input(
                 "Refractory period (us)", 0, 100_000, int(defaults[3]), 10
             )
-            background_activity = st.checkbox("Background activity", value=bool(defaults[5]))
+            background_activity = st.checkbox(
+                "Background activity", value=bool(defaults[5])
+            )
             accumulation_ms = st.select_slider(
                 "Visualization window (ms)", [1, 5, 10, 20], value=int(defaults[7])
             )
@@ -309,7 +317,9 @@ def main() -> None:
     if submitted:
         workdir = Path(tempfile.mkdtemp(prefix="evsim_ui_"))
         try:
-            input_path = _prepare_input(source_mode, uploaded_video, uploaded_zip, workdir)
+            input_path = _prepare_input(
+                source_mode, uploaded_video, uploaded_zip, workdir
+            )
             config = _build_config(
                 preset=preset,
                 positive_threshold=positive_threshold,
@@ -339,7 +349,9 @@ def main() -> None:
                 )
             st.session_state["ui_result"] = {
                 "input_path": str(input_path),
-                "input_playback_path": (str(input_playback_path) if input_playback_path else None),
+                "input_playback_path": (
+                    str(input_playback_path) if input_playback_path else None
+                ),
                 "video_path": str(video_path),
                 "npz_path": config.output.npz_path,
                 "statistics_path": config.output.statistics_path,
@@ -383,9 +395,13 @@ def main() -> None:
     metric_cols[2].metric("OFF", f"{int(stats.get('off_events', 0)):,}")
     metric_cols[3].metric("Event rate", f"{event_rate:,.1f} kEvents/s")
     processing_cols = st.columns(4)
-    processing_cols[0].metric("Processing", f"{float(stats.get('processing_fps', 0.0)):,.1f} FPS")
+    processing_cols[0].metric(
+        "Processing", f"{float(stats.get('processing_fps', 0.0)):,.1f} FPS"
+    )
     source_fps = stats.get("source_fps")
-    processing_cols[1].metric("Source FPS", f"{float(source_fps):,.1f}" if source_fps else "n/a")
+    processing_cols[1].metric(
+        "Source FPS", f"{float(source_fps):,.1f}" if source_fps else "n/a"
+    )
     processing_cols[2].metric(
         "Input duration", f"{float(stats.get('input_duration_s', 0.0)):,.4f} s"
     )
@@ -416,7 +432,9 @@ def main() -> None:
         if input_playback and Path(input_playback).exists():
             st.video(input_playback)
         else:
-            st.info("The current source is an image sequence, so only the input preview is shown.")
+            st.info(
+                "The current source is an image sequence, so only the input preview is shown."
+            )
     with playback_cols[1]:
         st.markdown("**Event video (H.264)**")
         if video_path.exists():

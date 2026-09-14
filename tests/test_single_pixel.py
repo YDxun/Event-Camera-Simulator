@@ -9,7 +9,8 @@ def simulated(config: SimulatorConfig, images: list[np.ndarray]) -> np.ndarray:
     sim = EventSimulator(config)
     sim.initialize(images[0], 0)
     parts = [
-        sim.process(image, index * 1000).events for index, image in enumerate(images[1:], start=1)
+        sim.process(image, index * 1000).events
+        for index, image in enumerate(images[1:], start=1)
     ]
     return np.concatenate(parts) if parts else np.empty(0)
 
@@ -73,7 +74,10 @@ def test_threshold_variation_is_reproducible():
         config.noise.enable_threshold_variation = True
         config.noise.threshold_sigma = 0.03
         config.noise.random_seed = seed
-        images = [np.full((8, 8), value, dtype=np.uint8) for value in (20, 80, 160, 240, 120, 40)]
+        images = [
+            np.full((8, 8), value, dtype=np.uint8)
+            for value in (20, 80, 160, 240, 120, 40)
+        ]
         return simulated(config, images)
 
     assert np.array_equal(run(123), run(123))
@@ -91,7 +95,9 @@ def test_analytical_timestamp_formula():
     log1 = float(to_log_intensity(bright, config.input, config.sensor)[0, 0])
     count = int(np.floor((log1 - log0) / config.sensor.positive_threshold + 1e-12))
     expected = np.floor(
-        (np.arange(1, count + 1) * config.sensor.positive_threshold) / (log1 - log0) * 1000
+        (np.arange(1, count + 1) * config.sensor.positive_threshold)
+        / (log1 - log0)
+        * 1000
     ).astype(np.int64)
     assert len(events) == count
     assert np.all(np.abs(events["timestamp_us"] - expected) <= 1)

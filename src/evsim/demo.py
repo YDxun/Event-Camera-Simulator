@@ -7,6 +7,24 @@ import numpy as np
 
 
 def demo_frame(width: int, height: int, index: int, total: int) -> np.ndarray:
+    """Render a synthetic grayscale frame with moving bright/dark disks and background textures.
+
+    The scene combines:
+    1. A linear horizontal illumination gradient.
+    2. A vertical spatial sinusoid texture.
+    3. A bright disk translating across the frame with sinusoidal vertical oscillation.
+    4. A dark disk translating in the opposite direction.
+    5. A global periodic intensity modulation (flashing illumination).
+
+    Args:
+        width: Frame width in pixels.
+        height: Frame height in pixels.
+        index: Current frame index [0, total - 1].
+        total: Total number of frames in the sequence.
+
+    Returns:
+        2D uint8 image array of shape (height, width).
+    """
     x = np.arange(width, dtype=np.float32)[None, :]
     y = np.arange(height, dtype=np.float32)[:, None]
     phase = index / max(total - 1, 1)
@@ -34,6 +52,18 @@ def write_synthetic_video(
     width: int,
     height: int,
 ) -> Path:
+    """Generate and write a synthetic high-FPS video file to disk.
+
+    Args:
+        path: Target file path (.avi).
+        fps: Frame rate in Hertz (e.g. 960.0).
+        seconds: Duration of the video in seconds.
+        width: Frame width in pixels.
+        height: Frame height in pixels.
+
+    Returns:
+        Path to the saved video file.
+    """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     total = round(fps * seconds)
@@ -60,6 +90,18 @@ def run_demo(
     width: int = 320,
     height: int = 240,
 ) -> dict[str, object]:
+    """Execute end-to-end self-contained 960 FPS demo generating video, events, and metrics.
+
+    Args:
+        output_dir: Destination directory for all output artifacts.
+        fps: Frame rate of synthetic input (default: 960.0).
+        seconds: Duration in seconds (default: 1.0).
+        width: Video width (default: 320).
+        height: Video height (default: 240).
+
+    Returns:
+        Dictionary of summary statistics and artifact locations.
+    """
     from .config import SimulatorConfig
     from .pipeline import simulate_source
     from .sources import open_source
@@ -67,7 +109,9 @@ def run_demo(
 
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
-    input_video = write_synthetic_video(output / "input_960fps.avi", fps, seconds, width, height)
+    input_video = write_synthetic_video(
+        output / "input_960fps.avi", fps, seconds, width, height
+    )
 
     config = SimulatorConfig()
     config.input.fallback_fps = fps
@@ -107,5 +151,7 @@ def run_demo(
     final_frame = demo_frame(width, height, total - 1, total)
     preview = EventVideoRenderer(width, height, config.visualization)
     preview.add(result.events, final_frame, total * 1_000_000)
-    cv.imwrite(str(output / "event_preview.png"), preview.render_combined_panel(final_frame))
+    cv.imwrite(
+        str(output / "event_preview.png"), preview.render_combined_panel(final_frame)
+    )
     return stats

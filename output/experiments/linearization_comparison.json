@@ -1,0 +1,12 @@
+[
+  {
+    "variant": "direct_log",
+    "event_count": 114519,
+    "event_rate_over_input_hz": 923850.756302521
+  },
+  {
+    "variant": "gamma_linearized",
+    "event_count": 304724,
+    "event_rate_over_input_hz": 2458277.6470588236
+  }
+]

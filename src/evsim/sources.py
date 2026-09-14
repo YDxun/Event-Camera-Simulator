@@ -12,15 +12,28 @@ import numpy as np
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"}
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Frame:
+    """A single frame from a video or image sequence.
+
+    Attributes:
+        image: Grayscale image array of shape (H, W) with dtype uint8.
+        timestamp_us: Integer timestamp in microseconds from sequence start.
+        index: Zero-based frame sequence number.
+    """
+
     image: np.ndarray
     timestamp_us: int
     index: int
 
 
 class FrameSource:
-    """Common frame-source interface."""
+    """Abstract base protocol for streaming high-FPS frames into the simulator.
+
+    Subclasses must implement `__iter__` and `reset()`. Context manager
+    semantics (`with source:`) ensure resources like file handles or OpenCV
+    VideoCapture streams are deterministically released.
+    """
 
     width: int
     height: int
@@ -28,13 +41,15 @@ class FrameSource:
     total_frames: int | None
 
     def __iter__(self) -> Iterator[Frame]:
+        """Iterate over frames sequentially in chronological order."""
         raise NotImplementedError
 
     def reset(self) -> None:
+        """Rewind the stream back to the initial frame."""
         raise NotImplementedError
 
     def close(self) -> None:
-        pass
+        """Release underlying system resources (e.g. video capture handles)."""
 
     def __enter__(self) -> Self:
         return self
@@ -44,13 +59,26 @@ class FrameSource:
 
 
 def _natural_key(path: Path) -> list[object]:
+    """Extract natural alphanumeric sort key so 'frame_2.png' precedes 'frame_10.png'."""
     return [
-        int(token) if token.isdigit() else token.lower() for token in re.split(r"(\d+)", path.stem)
+        int(token) if token.isdigit() else token.lower()
+        for token in re.split(r"(\d+)", path.stem)
     ]
 
 
 def read_image(path: str | Path, flags: int = cv.IMREAD_UNCHANGED) -> np.ndarray | None:
-    """Read images on Windows even when the path contains non-ASCII characters."""
+    """Read an image file across platforms, supporting paths with non-ASCII characters.
+
+    Standard cv.imread fails on Windows when paths contain unicode characters.
+    Using np.fromfile followed by cv.imdecode bypasses the OS path limitations.
+
+    Args:
+        path: Path to the image file.
+        flags: OpenCV image decoding flags (default: cv.IMREAD_UNCHANGED).
+
+    Returns:
+        The decoded image as a NumPy ndarray, or None if reading/decoding fails.
+    """
     try:
         data = np.fromfile(path, dtype=np.uint8)
         return cv.imdecode(data, flags)
@@ -59,7 +87,15 @@ def read_image(path: str | Path, flags: int = cv.IMREAD_UNCHANGED) -> np.ndarray
 
 
 def write_image(path: str | Path, image: np.ndarray) -> bool:
-    """Write images on Windows even when the path contains non-ASCII characters."""
+    """Write an image file across platforms, supporting paths with non-ASCII characters.
+
+    Args:
+        path: Target file path.
+        image: Image array to write.
+
+    Returns:
+        True if the image was successfully encoded and written, False otherwise.
+    """
     path = Path(path)
     ok, encoded = cv.imencode(path.suffix, image)
     if not ok:
@@ -72,6 +108,14 @@ def write_image(path: str | Path, image: np.ndarray) -> bool:
 
 
 def _to_gray(image: np.ndarray) -> np.ndarray:
+    """Convert an arbitrary input image (grayscale, BGR, BGRA) to 2D uint8 grayscale.
+
+    Args:
+        image: Input image array of shape (H, W), (H, W, 1), (H, W, 3) or (H, W, 4).
+
+    Returns:
+        2D single-channel grayscale array of shape (H, W).
+    """
     if image.ndim == 2:
         return image
     if image.ndim != 3:
@@ -87,7 +131,15 @@ def _to_gray(image: np.ndarray) -> np.ndarray:
 
 
 class VideoSource(FrameSource):
-    """Reads frames, FPS and resolution from a video via OpenCV."""
+    """Reads frames, FPS and resolution from a video file via OpenCV VideoCapture.
+
+    Timestamps are synthesized from frame index and frame rate:
+    `timestamp_us = round((index / fps) * 1_000_000.0)`.
+
+    Args:
+        path: Path to video file (.mp4, .avi, etc.).
+        fallback_fps: FPS to assume if OpenCV reports 0 or invalid FPS.
+    """
 
     def __init__(self, path: str | Path, fallback_fps: float = 960.0):
         self.path = Path(path)
@@ -132,7 +184,17 @@ class VideoSource(FrameSource):
 
 
 class ImageSequenceSource(FrameSource):
-    """Reads an image folder, optionally using THU-HSEVI-style ts_frame.txt."""
+    """Reads a folder of images, optionally using THU-HSEVI-style ts_frame.txt timestamps.
+
+    If `ts_frame.txt` is found in the sequence directory or root, real timestamps
+    are parsed and converted to microseconds. Otherwise, uniform timestamps
+    are synthesized from `fallback_fps`.
+
+    Args:
+        path: Path to directory containing images or sequence root.
+        fallback_fps: Fallback frame rate if no timestamp file exists.
+        timestamp_scale_us: Multiplier to convert raw timestamp units to microseconds.
+    """
 
     def __init__(
         self,
@@ -196,7 +258,9 @@ class ImageSequenceSource(FrameSource):
                 if match:
                     values.append(float(match.group(0)))
         if len(values) >= len(self.paths):
-            timestamps = np.rint(np.asarray(values[: len(self.paths)]) * scale).astype(np.int64)
+            timestamps = np.rint(np.asarray(values[: len(self.paths)]) * scale).astype(
+                np.int64
+            )
             if np.all(np.diff(timestamps) > 0):
                 return timestamps
         self._timestamp_file = None
@@ -226,10 +290,14 @@ class ImageSequenceSource(FrameSource):
             "frames": self.total_frames,
             "fallback_fps": self.fps,
             "has_timestamp_file": self.has_timestamps,
-            "timestamp_file": str(self._timestamp_file) if self._timestamp_file else None,
+            "timestamp_file": str(self._timestamp_file)
+            if self._timestamp_file
+            else None,
             "timestamp_start_us": int(self.timestamps_us[0]),
             "timestamp_end_us": int(self.timestamps_us[-1]),
-            "duration_s": float((self.timestamps_us[-1] - self.timestamps_us[0]) / 1_000_000.0),
+            "duration_s": float(
+                (self.timestamps_us[-1] - self.timestamps_us[0]) / 1_000_000.0
+            ),
         }
 
 
@@ -238,6 +306,19 @@ def open_source(
     fallback_fps: float = 960.0,
     timestamp_scale_us: float = 1.0,
 ) -> FrameSource:
+    """Factory function returning the appropriate FrameSource for a file or directory.
+
+    Args:
+        path: Path to a video file (.mp4, .avi, etc.) or an image directory.
+        fallback_fps: Default frame rate if source does not provide one.
+        timestamp_scale_us: Timestamp scaling factor for image sequence timestamps.
+
+    Returns:
+        A FrameSource instance (VideoSource or ImageSequenceSource).
+
+    Raises:
+        FileNotFoundError: If path does not exist.
+    """
     source_path = Path(path)
     if source_path.is_dir():
         return ImageSequenceSource(
@@ -255,6 +336,16 @@ def inspect_source(
     fallback_fps: float = 960.0,
     timestamp_scale_us: float = 1.0,
 ) -> dict[str, object]:
+    """Inspect input metadata (resolution, frame count, FPS, duration) without full decode.
+
+    Args:
+        path: Path to video file or image sequence directory.
+        fallback_fps: Fallback FPS if absent.
+        timestamp_scale_us: Multiplier to convert raw timestamp units to microseconds.
+
+    Returns:
+        Dictionary containing metadata summary.
+    """
     source = open_source(path, fallback_fps, timestamp_scale_us)
     try:
         if isinstance(source, ImageSequenceSource):
@@ -267,7 +358,9 @@ def inspect_source(
             "frames": source.total_frames,
             "fps": source.fps,
             "duration_s": (
-                source.total_frames / source.fps if source.total_frames and source.fps else None
+                source.total_frames / source.fps
+                if source.total_frames and source.fps
+                else None
             ),
         }
     finally:

@@ -84,49 +84,49 @@
   },
   "benchmark": {
     "vectorized": {
-      "elapsed_s": 0.4267116000119131,
-      "frames_per_s": 67.96159279286142,
-      "mega_pixel_frames_per_s": 0.46975052938425815,
+      "elapsed_s": 0.1475654249998115,
+      "frames_per_s": 196.5229998831843,
+      "mega_pixel_frames_per_s": 1.35836697519257,
       "events": 889455
     },
     "loop": {
-      "elapsed_s": 5.3176043999847025,
-      "frames_per_s": 5.453583572347621,
-      "mega_pixel_frames_per_s": 0.037695169652066755,
+      "elapsed_s": 1.593835958999989,
+      "frames_per_s": 18.195097077741487,
+      "mega_pixel_frames_per_s": 0.12576451100134914,
       "events": 889455
     },
-    "speedup_loop_over_vectorized": 12.46182292638926
+    "speedup_loop_over_vectorized": 10.8008766891162
   },
   "threshold_sweep": [
     {
       "threshold": 0.1,
-      "event_count": 256211,
-      "event_rate_over_input_hz": 1546934.3396226414,
-      "count_times_threshold": 25621.100000000002
+      "event_count": 256196,
+      "event_rate_over_input_hz": 1546843.7735849058,
+      "count_times_threshold": 25619.600000000002
     },
     {
       "threshold": 0.15,
-      "event_count": 156546,
-      "event_rate_over_input_hz": 945183.3962264152,
-      "count_times_threshold": 23481.899999999998
+      "event_count": 156535,
+      "event_rate_over_input_hz": 945116.9811320755,
+      "count_times_threshold": 23480.25
     },
     {
       "threshold": 0.2,
-      "event_count": 114563,
-      "event_rate_over_input_hz": 691701.1320754717,
-      "count_times_threshold": 22912.600000000002
+      "event_count": 114555,
+      "event_rate_over_input_hz": 691652.8301886793,
+      "count_times_threshold": 22911.0
     },
     {
       "threshold": 0.3,
-      "event_count": 72298,
-      "event_rate_over_input_hz": 436516.22641509434,
-      "count_times_threshold": 21689.399999999998
+      "event_count": 72293,
+      "event_rate_over_input_hz": 436486.0377358491,
+      "count_times_threshold": 21687.899999999998
     },
     {
       "threshold": 0.4,
-      "event_count": 51748,
-      "event_rate_over_input_hz": 312440.75471698114,
-      "count_times_threshold": 20699.2
+      "event_count": 51744,
+      "event_rate_over_input_hz": 312416.60377358494,
+      "count_times_threshold": 20697.600000000002
     }
   ],
   "noise_ablation": [
@@ -244,13 +244,13 @@
   "linearization_comparison": [
     {
       "variant": "direct_log",
-      "event_count": 114527,
-      "event_rate_over_input_hz": 923915.294117647
+      "event_count": 114519,
+      "event_rate_over_input_hz": 923850.756302521
     },
     {
       "variant": "gamma_linearized",
-      "event_count": 304904,
-      "event_rate_over_input_hz": 2459729.74789916
+      "event_count": 304724,
+      "event_rate_over_input_hz": 2458277.6470588236
     }
   ]
 }

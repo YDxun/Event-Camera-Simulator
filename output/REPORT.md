@@ -36,26 +36,26 @@ downstream learning model is used.
 
 | Metric | Value |
 |---|---:|
-| frames_processed | 960 |
-| event_count | 728361 |
-| on_events | 316258 |
-| off_events | 412103 |
-| input_duration_s | 0.998958 |
-| active_event_duration_s | 0.998893 |
-| event_rate_over_input_hz | 729120.7438150552 |
-| event_rate_over_active_hz | 729168.1891854282 |
+| frames_processed | 96 |
+| event_count | 530543 |
+| on_events | 236246 |
+| off_events | 294297 |
+| input_duration_s | 0.098958 |
+| active_event_duration_s | 0.098906 |
+| event_rate_over_input_hz | 5361294.690676852 |
+| event_rate_over_active_hz | 5364113.400602593 |
 | monotonic_timestamps | True |
-| processing_fps | 128.7595664168783 |
+| processing_fps | 223.10577687514237 |
 
 ## Threshold sweep
 
 | C | Event count | Event rate over input | Count x C |
 |---:|---:|---:|---:|
-| 0.10 | 256,211 | 1546934.3 | 25621.1 |
-| 0.15 | 156,546 | 945183.4 | 23481.9 |
-| 0.20 | 114,563 | 691701.1 | 22912.6 |
-| 0.30 | 72,298 | 436516.2 | 21689.4 |
-| 0.40 | 51,748 | 312440.8 | 20699.2 |
+| 0.10 | 256,196 | 1546843.8 | 25619.6 |
+| 0.15 | 156,535 | 945117.0 | 23480.2 |
+| 0.20 | 114,555 | 691652.8 | 22911.0 |
+| 0.30 | 72,293 | 436486.0 | 21687.9 |
+| 0.40 | 51,744 | 312416.6 | 20697.6 |
 
 The event count decreases monotonically as `C` increases, while `N*C`
 remains in the same order of magnitude, consistent with `N ~ 1/C`.
@@ -106,8 +106,8 @@ Accumulation affects visualization only, not the raw event stream.
 
 | Preprocessing | Events | Rate over input |
 |---|---:|---:|
-| direct_log | 114,527 | 923915.3 |
-| gamma_linearized | 304,904 | 2459729.7 |
+| direct_log | 114,519 | 923850.8 |
+| gamma_linearized | 304,724 | 2458277.6 |
 
 The source-camera response curve is generally unknown. Gamma
 linearization is an optional approximation, not a claim of exact
@@ -117,10 +117,10 @@ radiometric calibration.
 
 | Backend | Runtime (s) | Frames/s | MPixel-frames/s | Events |
 |---|---:|---:|---:|---:|
-| vectorized | 0.427 | 67.96 | 0.4698 | 889,455 |
-| loop | 5.318 | 5.45 | 0.0377 | 889,455 |
+| vectorized | 0.148 | 196.52 | 1.3584 | 889,455 |
+| loop | 1.594 | 18.20 | 0.1258 | 889,455 |
 
-Measured speedup `T_loop / T_vectorized = 12.46x`.
+Measured speedup `T_loop / T_vectorized = 10.80x`.
 
 ## Assumptions and limitations
 
@@ -140,3 +140,4 @@ Measured speedup `T_loop / T_vectorized = 12.46x`.
 - `accumulation_window.json` and `accumulation_window_montage.png`
 - `linearization_comparison.json` and `linearization_comparison.png`
 - `../demo/events.csv`, `../demo/events.npz` and `../demo/event_video.avi`
+

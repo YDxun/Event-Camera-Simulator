@@ -37,7 +37,9 @@ def _apply_overrides(config: SimulatorConfig, cmd: SimulateCmd) -> None:
     config.validate()
 
 
-def _write_result(result_stats: dict, stream: EventStream, config: SimulatorConfig) -> None:
+def _write_result(
+    result_stats: dict, stream: EventStream, config: SimulatorConfig
+) -> None:
     if config.output.csv_path:
         stream.save_csv(config.output.csv_path)
     if config.output.npz_path:
@@ -85,7 +87,9 @@ class SimulateCmd:
     """Path to save event stream in compressed NPZ format."""
     video: Annotated[str | None, tyro.conf.arg(aliases=["-v"])] = None
     """Path to save illustrative event accumulation video."""
-    backend: Annotated[Literal["vectorized", "loop"] | None, tyro.conf.arg(aliases=["-b"])] = None
+    backend: Annotated[
+        Literal["vectorized", "loop"] | None, tyro.conf.arg(aliases=["-b"])
+    ] = None
     """Simulation backend: 'vectorized' (default, fast) or 'loop' (reference)."""
     positive_threshold: float | None = None
     """Positive contrast threshold C+."""
@@ -124,7 +128,9 @@ class SimulateCmd:
         )
         renderer = None
         if config.visualization.output_video:
-            renderer = EventVideoRenderer(source.width, source.height, config.visualization)
+            renderer = EventVideoRenderer(
+                source.width, source.height, config.visualization
+            )
             renderer.open(config.visualization.output_video)
         try:
             result = simulate_source(
@@ -193,7 +199,7 @@ class BenchmarkCmd:
 class DemoCmd:
     """Generate and simulate a self-contained 960 FPS demo."""
 
-    output_dir: Annotated[str, tyro.conf.arg(aliases=["-o"])] = "results_python/demo"
+    output_dir: Annotated[str, tyro.conf.arg(aliases=["-o"])] = "output/demo"
     """Output directory for generated demo artifacts."""
     fps: float = 960.0
     """Frame rate of synthetic video."""

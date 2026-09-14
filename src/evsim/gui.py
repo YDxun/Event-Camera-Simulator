@@ -3,6 +3,7 @@
 import json
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 import cv2 as cv
@@ -73,6 +74,7 @@ class SimulationWorker(QThread):
             total_frames = self.source.total_frames or self.max_frames or 100
             last_timestamp_us = 0
             frames_processed = 0
+            started = time.perf_counter()
 
             from .simulator import EventSimulator
 
@@ -113,16 +115,20 @@ class SimulationWorker(QThread):
             if self.renderer is not None:
                 self.renderer.close()
 
+            elapsed = time.perf_counter() - started
             stream = EventStream.concatenate(events_list)
             stats = stream.summary(input_duration_us=last_timestamp_us)
             stats["frames_processed"] = frames_processed
             stats["contrast_events"] = contrast_events
             stats["background_events"] = background_events
             stats["cancelled"] = self._is_cancelled
+            stats["elapsed_seconds"] = elapsed
 
             sim_res = SimulationResult(
                 event_stream=stream,
                 statistics=stats,
+                frames_processed=frames_processed,
+                elapsed_seconds=elapsed,
                 video_path=self.config.visualization.output_video,
             )
             self.finished.emit(stats, sim_res)
@@ -173,14 +179,18 @@ class MainWindow(QMainWindow):
         src_type_layout = QHBoxLayout()
         src_type_layout.addWidget(QLabel("Mode:"))
         self.combo_source_type = QComboBox()
-        self.combo_source_type.addItems(["Synthetic 960 FPS Demo", "Video File", "Image Sequence"])
+        self.combo_source_type.addItems(
+            ["Synthetic 960 FPS Demo", "Video File", "Image Sequence"]
+        )
         self.combo_source_type.currentIndexChanged.connect(self._on_source_type_changed)
         src_type_layout.addWidget(self.combo_source_type)
         source_layout.addLayout(src_type_layout)
 
         path_layout = QHBoxLayout()
         self.edit_source_path = QLineEdit()
-        self.edit_source_path.setPlaceholderText("Path to video file or image sequence directory")
+        self.edit_source_path.setPlaceholderText(
+            "Path to video file or image sequence directory"
+        )
         self.btn_browse = QPushButton("Browse...")
         self.btn_browse.clicked.connect(self._browse_source)
         path_layout.addWidget(self.edit_source_path)
@@ -272,17 +282,17 @@ class MainWindow(QMainWindow):
         out_form = QFormLayout(out_group)
 
         self.chk_save_csv = QCheckBox("Save CSV")
-        self.edit_csv_path = QLineEdit("results_python/gui_events.csv")
+        self.edit_csv_path = QLineEdit("output/gui_events.csv")
         out_form.addRow(self.chk_save_csv, self.edit_csv_path)
 
         self.chk_save_npz = QCheckBox("Save NPZ")
         self.chk_save_npz.setChecked(True)
-        self.edit_npz_path = QLineEdit("results_python/gui_events.npz")
+        self.edit_npz_path = QLineEdit("output/gui_events.npz")
         out_form.addRow(self.chk_save_npz, self.edit_npz_path)
 
         self.chk_save_video = QCheckBox("Generate Video")
         self.chk_save_video.setChecked(True)
-        self.edit_video_path = QLineEdit("results_python/gui_video.avi")
+        self.edit_video_path = QLineEdit("output/gui_video.avi")
         out_form.addRow(self.chk_save_video, self.edit_video_path)
 
         left_layout.addWidget(out_group)
@@ -328,14 +338,18 @@ class MainWindow(QMainWindow):
         stats_layout = QVBoxLayout(tab_stats)
         self.table_stats = QTableWidget(0, 2)
         self.table_stats.setHorizontalHeaderLabels(["Metric", "Value"])
-        self.table_stats.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.table_stats.horizontalHeader().setSectionResizeMode(
+            QHeaderView.ResizeMode.Stretch
+        )
         stats_layout.addWidget(self.table_stats)
         self.tabs.addTab(tab_stats, "Statistics")
 
         # Tab 2: Visual Preview
         tab_preview = QWidget()
         preview_layout = QVBoxLayout(tab_preview)
-        self.lbl_preview_image = QLabel("Visual preview will appear here after simulation.")
+        self.lbl_preview_image = QLabel(
+            "Visual preview will appear here after simulation."
+        )
         self.lbl_preview_image.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.lbl_preview_image.setStyleSheet(
             "background-color: #1e1e1e; color: #888; border-radius: 4px;"
@@ -379,7 +393,9 @@ class MainWindow(QMainWindow):
                 "Video Files (*.mp4 *.avi *.mov *.mkv *.wmv);;All Files (*)",
             )
         else:  # Image Sequence
-            path = QFileDialog.getExistingDirectory(self, "Select Image Sequence Directory")
+            path = QFileDialog.getExistingDirectory(
+                self, "Select Image Sequence Directory"
+            )
         if path:
             self.edit_source_path.setText(path)
             self._inspect_selected_source(path)
@@ -387,7 +403,9 @@ class MainWindow(QMainWindow):
     def _inspect_selected_source(self, path: str) -> None:
         try:
             meta = inspect_source(path, fallback_fps=self.spin_fallback_fps.value())
-            frames_str = f"{meta['frames']} frames" if meta.get("frames") else "unknown frames"
+            frames_str = (
+                f"{meta['frames']} frames" if meta.get("frames") else "unknown frames"
+            )
             dur_str = f", {meta['duration_s']:.2f}s" if meta.get("duration_s") else ""
             self.lbl_source_info.setText(
                 f"Source: {meta.get('width', '?')}x{meta.get('height', '?')} @ {meta.get('fps', self.spin_fallback_fps.value()):.1f} FPS ({frames_str}{dur_str})"
@@ -421,7 +439,9 @@ class MainWindow(QMainWindow):
         config.visualization.accumulation_time_us = self.spin_accum.value()
 
         config.noise.enable_threshold_variation = self.chk_threshold_var.isChecked()
-        config.noise.threshold_sigma = 0.02 if self.chk_threshold_var.isChecked() else 0.0
+        config.noise.threshold_sigma = (
+            0.02 if self.chk_threshold_var.isChecked() else 0.0
+        )
         config.noise.background_rate_hz = 0.02 if self.chk_bg_noise.isChecked() else 0.0
 
         config.input.linearize_gamma = self.chk_linearization.isChecked()
@@ -456,13 +476,17 @@ class MainWindow(QMainWindow):
             else:
                 path_str = self.edit_source_path.text().strip()
                 if not path_str:
-                    QMessageBox.warning(self, "Missing Input", "Please specify an input path.")
+                    QMessageBox.warning(
+                        self, "Missing Input", "Please specify an input path."
+                    )
                     return
                 source = open_source(path_str, fallback_fps=config.input.fallback_fps)
 
             renderer = None
             if config.visualization.output_video:
-                renderer = EventVideoRenderer(source.width, source.height, config.visualization)
+                renderer = EventVideoRenderer(
+                    source.width, source.height, config.visualization
+                )
                 renderer.open(config.visualization.output_video)
 
             self.btn_run.setEnabled(False)
@@ -502,7 +526,9 @@ class MainWindow(QMainWindow):
         self.btn_run.setEnabled(True)
         self.btn_cancel.setEnabled(False)
         self.lbl_status.setText(
-            "Simulation complete!" if not stats.get("cancelled") else "Simulation cancelled."
+            "Simulation complete!"
+            if not stats.get("cancelled")
+            else "Simulation cancelled."
         )
 
         # Save files if requested
@@ -538,7 +564,9 @@ class MainWindow(QMainWindow):
             ("OFF Events (-1)", stats.get("off_events")),
             (
                 "ON / OFF Ratio",
-                f"{stats.get('on_off_ratio', 0.0):.4f}" if stats.get("on_off_ratio") else "N/A",
+                f"{stats.get('on_off_ratio', 0.0):.4f}"
+                if stats.get("on_off_ratio")
+                else "N/A",
             ),
             ("Input Duration", f"{stats.get('input_duration_s', 0.0):.4f} s"),
             (
@@ -568,7 +596,9 @@ class MainWindow(QMainWindow):
             # Render a representative preview panel (Input | Events | Overlay)
             width, height = 320, 240
             frame = demo_frame(width, height, 50, 100)
-            renderer = EventVideoRenderer(width, height, SimulatorConfig().visualization)
+            renderer = EventVideoRenderer(
+                width, height, SimulatorConfig().visualization
+            )
             if result.events.size:
                 renderer.add(result.events, frame, 50000)
             panel = renderer.render_combined_panel(frame)

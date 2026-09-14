@@ -1,4 +1,4 @@
-"""Configuration model for the Python event-camera simulator."""
+"""Configuration model and validation for the event-camera simulator."""
 
 import json
 from dataclasses import asdict, dataclass, fields
@@ -10,6 +10,16 @@ T = TypeVar("T")
 
 @dataclass
 class InputConfig:
+    """Settings for input video or image-sequence loading and preprocessing.
+
+    Attributes:
+        fallback_fps: Frame rate assumed if not specified in video/image metadata.
+        linearize: Whether to invert gamma encoding (approximate radiometric linear radiance).
+        gamma: Exponent for gamma linearization (typically 2.2 for sRGB).
+        bit_depth: Sensor bit depth (8 or 16), determines normalization scale (2^N - 1).
+        timestamp_scale_us: Scaling factor to convert raw image timestamps into microseconds.
+    """
+
     fallback_fps: float = 960.0
     linearize: bool = False
     gamma: float = 2.2
@@ -19,6 +29,16 @@ class InputConfig:
 
 @dataclass
 class SensorConfig:
+    """Neuromorphic sensor analog pixel circuit parameters.
+
+    Attributes:
+        positive_threshold: Log-intensity change threshold C+ to fire an ON event.
+        negative_threshold: Log-intensity change threshold C- to fire an OFF event.
+        log_epsilon: Small constant added before log to avoid log(0) and model dark current.
+        timestamp_resolution_us: Temporal quantization bin size in microseconds (>= 1).
+        refractory_period_us: Dead time in microseconds after an event where no new event can fire.
+    """
+
     positive_threshold: float = 0.20
     negative_threshold: float = 0.20
     log_epsilon: float = 1e-3
@@ -28,12 +48,28 @@ class SensorConfig:
 
 @dataclass
 class SimulationConfig:
+    """Algorithm execution and interpolation parameters.
+
+    Attributes:
+        interpolation: 'linear' for sub-frame event timestamp interpolation, or 'none'.
+        backend: 'vectorized' (NumPy broadcasted, fast) or 'loop' (pixel-by-pixel reference).
+    """
+
     interpolation: str = "linear"
     backend: str = "vectorized"
 
 
 @dataclass
 class NoiseConfig:
+    """Stochastic noise parameters simulating physical sensor non-idealities.
+
+    Attributes:
+        enable_threshold_variation: Whether to apply per-pixel Gaussian threshold mismatch.
+        threshold_sigma: Standard deviation of pixel threshold variation (Gaussian).
+        background_rate_hz: Mean Poisson background event rate per pixel in Hertz.
+        random_seed: Seed for reproducible noise generation.
+    """
+
     enable_threshold_variation: bool = False
     threshold_sigma: float = 0.03
     background_rate_hz: float = 0.0
@@ -42,6 +78,16 @@ class NoiseConfig:
 
 @dataclass
 class VisualizationConfig:
+    """Accumulation and rendering options for video and preview panels.
+
+    Attributes:
+        accumulation_time_us: Sliding temporal window duration in microseconds for event frames.
+        playback_fps: Playback frame rate of rendered output video.
+        overlay_opacity: Alpha blending factor [0.0, 1.0] for overlaying events onto grayscale.
+        output_video: Path to save rendered video (.mp4 or .avi).
+        display: Whether to display interactive UI window.
+    """
+
     accumulation_time_us: int = 10_000
     playback_fps: float = 30.0
     overlay_opacity: float = 0.65
@@ -51,6 +97,14 @@ class VisualizationConfig:
 
 @dataclass
 class OutputConfig:
+    """Paths for saving simulation outputs and event streams.
+
+    Attributes:
+        csv_path: Path to write text CSV event stream ('timestamp_s,x,y,polarity').
+        npz_path: Path to write compressed NumPy NPZ event archive.
+        statistics_path: Path to write JSON summary statistics.
+    """
+
     csv_path: str = ""
     npz_path: str = ""
     statistics_path: str = ""
@@ -58,12 +112,21 @@ class OutputConfig:
 
 @dataclass
 class RuntimeConfig:
+    """Runtime execution limits and diagnostics.
+
+    Attributes:
+        max_frames: Stop processing after this many frames (0 = process all frames).
+        progress: Whether to show a progress bar in terminal.
+    """
+
     max_frames: int = 0
     progress: bool = True
 
 
 @dataclass
 class SimulatorConfig:
+    """Root configuration tree combining all simulation sub-configurations."""
+
     input: InputConfig | None = None
     sensor: SensorConfig | None = None
     simulation: SimulationConfig | None = None
@@ -141,7 +204,9 @@ class SimulatorConfig:
             section_allowed = {f.name for f in fields(section_cls)}
             extra = set(values) - section_allowed
             if extra:
-                raise ValueError(f"Unknown keys in {section_cls.__name__}: {sorted(extra)}")
+                raise ValueError(
+                    f"Unknown keys in {section_cls.__name__}: {sorted(extra)}"
+                )
             return section_cls(**values)
 
         return cls(

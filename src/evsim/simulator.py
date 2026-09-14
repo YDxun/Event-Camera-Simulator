@@ -1,4 +1,37 @@
-"""Vectorized and pixel-loop event generation from frame pairs."""
+"""Vectorized and pixel-loop event generation from frame pairs.
+
+Mathematical Formulation:
+-------------------------
+1. Photoreceptor Log Intensity:
+   L(x, y, t) = ln(I(x, y, t) + epsilon)
+   where epsilon prevents log(0) singularity and models dark current offset.
+
+2. Temporal Contrast & Threshold Crossing:
+   Between frame intervals [t0, t1], the log-intensity change relative to the
+   pixel's stateful reference level L_ref is:
+   Delta L = L(x, y, t1) - L_ref(x, y)
+
+   An event fires when |Delta L| exceeds the contrast threshold:
+   - ON event (polarity = +1):  Delta L >= C+
+   - OFF event (polarity = -1): Delta L <= -C-
+
+3. Multiple Crossings per Frame Interval:
+   For high-speed motion, multiple events can fire within a single interval:
+   k_max = floor(|Delta L| / C)
+   Crossing levels: L_k = L_ref +/- k * C, for k in 1..k_max.
+
+4. Piecewise-Linear Interpolation:
+   Under the linear intensity assumption between t0 and t1:
+   alpha_k = (L_k - L(t0)) / (L(t1) - L(t0))
+   t_k = round(t0 + alpha_k * (t1 - t0))
+
+5. Quantization & Refractory Filter:
+   - Timestamps are floor-quantized to sensor resolution:
+     t_quant = floor(t_k / delta_t_res) * delta_t_res
+   - Refractory period: events occurring within delta_t_refr from the
+     last accepted event at that pixel are dropped.
+   - For accepted events, the reference level updates: L_ref <- L_k.
+"""
 
 from dataclasses import dataclass
 
@@ -10,14 +43,24 @@ from .preprocessing import to_log_intensity
 
 
 def _crossing_counts(delta: np.ndarray, threshold: np.ndarray) -> np.ndarray:
-    ratio = np.maximum(delta, 0.0) / threshold
-    counts = np.floor(ratio + 1e-12).astype(np.int64)
-    counts[delta < threshold] = 0
+    """Calculate the number of threshold crossings for each pixel.
+
+    Evaluates only pixels where delta >= threshold, avoiding floating-point
+    divisions across the static scene background.
+    """
+    counts = np.zeros_like(delta, dtype=np.int64)
+    active = delta >= threshold
+    if np.any(active):
+        counts[active] = np.floor(delta[active] / threshold[active] + 1e-12).astype(
+            np.int64
+        )
     return counts
 
 
 @dataclass
 class PairEvents:
+    """Generated events and breakdown for a consecutive frame pair."""
+
     events: np.ndarray
     contrast_events: int
     background_events: int
@@ -37,13 +80,17 @@ class EventSimulator:
         self.pos_thresholds: np.ndarray | None = None
         self.neg_thresholds: np.ndarray | None = None
         self.last_event_time_us: np.ndarray | None = None
+        self._current_log1: np.ndarray | None = None
         self.rng = np.random.default_rng(config.noise.random_seed)
 
     def initialize(self, image: np.ndarray, timestamp_us: int) -> None:
         if image.ndim != 2:
             raise ValueError(f"Expected grayscale frame, got shape {image.shape}")
         self.height, self.width = image.shape
-        if self.width > np.iinfo(np.uint16).max or self.height > np.iinfo(np.uint16).max:
+        if (
+            self.width > np.iinfo(np.uint16).max
+            or self.height > np.iinfo(np.uint16).max
+        ):
             raise ValueError("Sensor dimensions must fit in uint16")
         count = self.width * self.height
         self.rng = np.random.default_rng(self.config.noise.random_seed)
@@ -51,10 +98,17 @@ class EventSimulator:
         sensor = self.config.sensor
         pos = np.full(count, sensor.positive_threshold, dtype=np.float32)
         neg = np.full(count, sensor.negative_threshold, dtype=np.float32)
-        if self.config.noise.enable_threshold_variation and self.config.noise.threshold_sigma > 0:
+        if (
+            self.config.noise.enable_threshold_variation
+            and self.config.noise.threshold_sigma > 0
+        ):
             sigma = self.config.noise.threshold_sigma
-            pos = self.rng.normal(sensor.positive_threshold, sigma, count).astype(np.float32)
-            neg = self.rng.normal(sensor.negative_threshold, sigma, count).astype(np.float32)
+            pos = self.rng.normal(sensor.positive_threshold, sigma, count).astype(
+                np.float32
+            )
+            neg = self.rng.normal(sensor.negative_threshold, sigma, count).astype(
+                np.float32
+            )
             np.maximum(pos, np.float32(1e-4), out=pos)
             np.maximum(neg, np.float32(1e-4), out=neg)
 
@@ -72,17 +126,20 @@ class EventSimulator:
         self.initialized = True
 
     def reset(self) -> None:
+        """Reset the simulator internal state to uninitialized."""
         self.initialized = False
         self.last_log_intensity = None
         self.ref_log_intensity = None
         self.pos_thresholds = None
         self.neg_thresholds = None
         self.last_event_time_us = None
+        self._current_log1 = None
         self.last_timestamp_us = 0
 
     def _build_candidates(
         self, log1: np.ndarray, timestamp_us: int
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Generate candidate events for the frame pair before refractory filtering."""
         assert self.last_log_intensity is not None
         assert self.ref_log_intensity is not None
         assert self.pos_thresholds is not None
@@ -105,7 +162,9 @@ class EventSimulator:
         kind_parts: list[np.ndarray] = []
 
         if total_contrast:
-            pixels = np.repeat(np.arange(contrast_counts.size, dtype=np.int64), contrast_counts)
+            pixels = np.repeat(
+                np.arange(contrast_counts.size, dtype=np.int64), contrast_counts
+            )
             starts = np.cumsum(contrast_counts) - contrast_counts
             rank = np.arange(total_contrast, dtype=np.int64) - starts[pixels]
             k = rank + 1
@@ -120,7 +179,9 @@ class EventSimulator:
             denominator = log1[pixels] - log0[pixels]
             alpha = np.zeros(total_contrast, dtype=np.float64)
             nonzero = np.abs(denominator) > 1e-12
-            alpha[nonzero] = (levels[nonzero] - log0[pixels][nonzero]) / denominator[nonzero]
+            alpha[nonzero] = (levels[nonzero] - log0[pixels][nonzero]) / denominator[
+                nonzero
+            ]
             np.clip(alpha, 0.0, 1.0, out=alpha)
             if self.config.simulation.interpolation == "linear":
                 times = np.rint(t0 + alpha * float(t1 - t0)).astype(np.int64)
@@ -143,7 +204,9 @@ class EventSimulator:
                     np.arange(background_counts.size, dtype=np.int64),
                     background_counts,
                 )
-                bg_times = self.rng.integers(t0, t1 + 1, size=total_background, dtype=np.int64)
+                bg_times = self.rng.integers(
+                    t0, t1 + 1, size=total_background, dtype=np.int64
+                )
                 bg_polarity = self.rng.choice(
                     np.array([-1, 1], dtype=np.int8), size=total_background
                 )
@@ -183,6 +246,12 @@ class EventSimulator:
         levels: np.ndarray,
         kind: np.ndarray,
     ) -> PairEvents:
+        """Filter candidate events through the pixel refractory period.
+
+        Candidates are processed rank-by-rank per pixel. An event is accepted
+        if (t_event - t_last_event >= refractory_period_us).
+        Accepted contrast events update the pixel's reference log-intensity L_ref.
+        """
         assert self.last_event_time_us is not None
         assert self.ref_log_intensity is not None
         if pixels.size == 0:
@@ -198,18 +267,20 @@ class EventSimulator:
 
         for rank in range(int(ranks.max()) + 1):
             selected = ranks == rank
-            pix = pixels[selected]
-            if pix.size == 0:
+            if not np.any(selected):
                 continue
-            timestamps = times[selected]
+            idx = np.flatnonzero(selected)
+            pix = pixels[idx]
+            timestamps = times[idx]
             keep = timestamps - self.last_event_time_us[pix] >= refractory
             if not np.any(keep):
                 continue
-            pix = pix[keep]
-            timestamps = timestamps[keep]
-            pol = polarity[selected][keep]
-            lev = levels[selected][keep]
-            candidate_kind = kind[selected][keep]
+            idx_keep = idx[keep]
+            pix = pixels[idx_keep]
+            timestamps = times[idx_keep]
+            pol = polarity[idx_keep]
+            lev = levels[idx_keep]
+            candidate_kind = kind[idx_keep]
 
             self.last_event_time_us[pix] = timestamps
             contrast = candidate_kind == 0
@@ -230,11 +301,15 @@ class EventSimulator:
         events = sort_events(np.concatenate(accepted_events))
         return PairEvents(events, accepted_contrast, accepted_background)
 
-    def _process_pair_vectorized(self, log1: np.ndarray, timestamp_us: int) -> PairEvents:
+    def _process_pair_vectorized(
+        self, log1: np.ndarray, timestamp_us: int
+    ) -> PairEvents:
+        """High-performance vectorized simulation path across all sensor pixels."""
         candidates = self._build_candidates(log1, timestamp_us)
         return self._apply_refractory(*candidates)
 
     def _process_pair_loop(self, log1: np.ndarray, timestamp_us: int) -> PairEvents:
+        """Reference explicit nested-loop simulation path for verification and testing."""
         assert self.last_log_intensity is not None
         assert self.ref_log_intensity is not None
         assert self.pos_thresholds is not None
@@ -258,17 +333,27 @@ class EventSimulator:
                 ratio = np.float32(delta / self.pos_thresholds[pixel])
                 count = int(np.floor(float(ratio) + 1e-12))
                 for k in range(1, count + 1):
-                    level = np.float32(ref_value + np.float32(k) * self.pos_thresholds[pixel])
-                    candidates.append((self._interpolate_time(pixel, level, t0, t1), 0, 1, level))
+                    level = np.float32(
+                        ref_value + np.float32(k) * self.pos_thresholds[pixel]
+                    )
+                    candidates.append(
+                        (self._interpolate_time(pixel, level, t0, t1), 0, 1, level)
+                    )
             elif delta <= -self.neg_thresholds[pixel]:
                 ratio = np.float32(-delta / self.neg_thresholds[pixel])
                 count = int(np.floor(float(ratio) + 1e-12))
                 for k in range(1, count + 1):
-                    level = np.float32(ref_value - np.float32(k) * self.neg_thresholds[pixel])
-                    candidates.append((self._interpolate_time(pixel, level, t0, t1), 0, -1, level))
+                    level = np.float32(
+                        ref_value - np.float32(k) * self.neg_thresholds[pixel]
+                    )
+                    candidates.append(
+                        (self._interpolate_time(pixel, level, t0, t1), 0, -1, level)
+                    )
 
             if self.config.noise.background_rate_hz > 0:
-                count = int(self.rng.poisson(self.config.noise.background_rate_hz * dt_s))
+                count = int(
+                    self.rng.poisson(self.config.noise.background_rate_hz * dt_s)
+                )
                 for _ in range(count):
                     time = int(self.rng.integers(t0, t1 + 1))
                     polarity = int(self.rng.choice([-1, 1]))
@@ -298,31 +383,42 @@ class EventSimulator:
         return PairEvents(sort_events(events), accepted_contrast, accepted_background)
 
     def _interpolate_time(self, pixel: int, level: float, t0: int, t1: int) -> int:
+        """Compute linearly interpolated crossing time within [t0, t1]."""
         assert self.last_log_intensity is not None
-        step = float(
-            np.float32(
-                np.float32(self._current_log1[pixel]) - np.float32(self.last_log_intensity[pixel])
-            )
-        )
-        if self.config.simulation.interpolation == "none" or abs(step) <= 1e-12:
+        assert self._current_log1 is not None
+        step = np.float32(self._current_log1[pixel] - self.last_log_intensity[pixel])
+        if self.config.simulation.interpolation == "none" or abs(float(step)) <= 1e-12:
             alpha = 1.0
         else:
-            numerator = np.float32(np.float32(level) - np.float32(self.last_log_intensity[pixel]))
-            alpha = float(np.float32(numerator / np.float32(step)))
+            numerator = np.float32(np.float32(level) - self.last_log_intensity[pixel])
+            alpha = float(numerator / step)
             alpha = min(1.0, max(0.0, alpha))
         return round(t0 + alpha * float(t1 - t0))
 
     def process(self, image: np.ndarray, timestamp_us: int) -> PairEvents:
+        """Process the next video frame and return generated events.
+
+        Args:
+            image: Grayscale frame matching the sensor resolution (H, W).
+            timestamp_us: Strictly increasing frame timestamp in microseconds.
+
+        Returns:
+            PairEvents containing the accepted events and statistics breakdown.
+        """
         if not self.initialized:
             raise RuntimeError("Simulator must be initialized before processing frames")
         if timestamp_us <= self.last_timestamp_us:
-            raise ValueError(f"Non-monotonic timestamp: {timestamp_us} <= {self.last_timestamp_us}")
+            raise ValueError(
+                f"Non-monotonic timestamp: {timestamp_us} <= {self.last_timestamp_us}"
+            )
         if image.shape != (self.height, self.width):
             raise ValueError(
                 f"Frame shape {image.shape} does not match sensor {(self.height, self.width)}"
             )
 
-        log1 = to_log_intensity(image, self.config.input, self.config.sensor).reshape(-1)
+        log1 = to_log_intensity(image, self.config.input, self.config.sensor).reshape(
+            -1
+        )
         self._current_log1 = log1
         if self.config.simulation.backend == "vectorized":
             result = self._process_pair_vectorized(log1, timestamp_us)
