@@ -1,7 +1,5 @@
 """Lightweight Streamlit UI for the Python event-camera simulator."""
 
-from __future__ import annotations
-
 import shutil
 import subprocess
 import tempfile

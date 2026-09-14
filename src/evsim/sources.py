@@ -1,7 +1,5 @@
 """High-FPS video and timestamp-aware image-sequence readers."""
 
-from __future__ import annotations
-
 import re
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -56,7 +54,7 @@ def read_image(path: str | Path, flags: int = cv.IMREAD_UNCHANGED) -> np.ndarray
     try:
         data = np.fromfile(path, dtype=np.uint8)
         return cv.imdecode(data, flags)
-    except (OSError, ValueError):
+    except OSError, ValueError:
         return None
 
 

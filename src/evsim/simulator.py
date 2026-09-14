@@ -1,7 +1,5 @@
 """Vectorized and pixel-loop event generation from frame pairs."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 
 import numpy as np

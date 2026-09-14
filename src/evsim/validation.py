@@ -1,7 +1,5 @@
 """Analytic and cross-backend validation for the event model."""
 
-from __future__ import annotations
-
 import time
 from dataclasses import asdict, dataclass
 from typing import Any

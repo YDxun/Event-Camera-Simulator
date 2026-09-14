@@ -1,7 +1,5 @@
 """Accumulated event visualization and illustrative video output."""
 
-from __future__ import annotations
-
 from pathlib import Path
 from typing import Self
 

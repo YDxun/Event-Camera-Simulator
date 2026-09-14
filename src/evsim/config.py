@@ -1,7 +1,5 @@
 """Configuration model for the Python event-camera simulator."""
 
-from __future__ import annotations
-
 import json
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
