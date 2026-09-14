@@ -1,4 +1,4 @@
-﻿"""High-FPS video and timestamp-aware image-sequence readers."""
+"""High-FPS video and timestamp-aware image-sequence readers."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
 
-import cv2
+import cv2 as cv
 import numpy as np
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"}
@@ -51,11 +51,11 @@ def _natural_key(path: Path) -> list[object]:
     ]
 
 
-def read_image(path: str | Path, flags: int = cv2.IMREAD_UNCHANGED) -> np.ndarray | None:
+def read_image(path: str | Path, flags: int = cv.IMREAD_UNCHANGED) -> np.ndarray | None:
     """Read images on Windows even when the path contains non-ASCII characters."""
     try:
         data = np.fromfile(path, dtype=np.uint8)
-        return cv2.imdecode(data, flags)
+        return cv.imdecode(data, flags)
     except (OSError, ValueError):
         return None
 
@@ -63,7 +63,7 @@ def read_image(path: str | Path, flags: int = cv2.IMREAD_UNCHANGED) -> np.ndarra
 def write_image(path: str | Path, image: np.ndarray) -> bool:
     """Write images on Windows even when the path contains non-ASCII characters."""
     path = Path(path)
-    ok, encoded = cv2.imencode(path.suffix, image)
+    ok, encoded = cv.imencode(path.suffix, image)
     if not ok:
         return False
     try:
@@ -82,10 +82,11 @@ def _to_gray(image: np.ndarray) -> np.ndarray:
     if channels == 1:
         return image[:, :, 0]
     if channels == 3:
-        return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        return cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     if channels == 4:
-        return cv2.cvtColor(image, cv2.COLOR_BGRA2GRAY)
+        return cv.cvtColor(image, cv.COLOR_BGRA2GRAY)
     raise ValueError(f"Unsupported channel count: {channels}")
+
 
 class VideoSource(FrameSource):
     """Reads frames, FPS and resolution from a video via OpenCV."""
@@ -94,21 +95,21 @@ class VideoSource(FrameSource):
         self.path = Path(path)
         if not self.path.is_file():
             raise FileNotFoundError(f"Video not found: {self.path}")
-        self.capture = cv2.VideoCapture(str(self.path))
+        self.capture = cv.VideoCapture(str(self.path))
         if not self.capture.isOpened():
             raise RuntimeError(f"Failed to open video: {self.path}")
-        self.width = int(self.capture.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.height = int(self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.width = int(self.capture.get(cv.CAP_PROP_FRAME_WIDTH))
+        self.height = int(self.capture.get(cv.CAP_PROP_FRAME_HEIGHT))
         if self.width <= 0 or self.height <= 0:
             ok, first_frame = self.capture.read()
             if ok and first_frame is not None and first_frame.size > 0:
                 self.height, self.width = first_frame.shape[:2]
-            self.capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            self.capture.set(cv.CAP_PROP_POS_FRAMES, 0)
         if self.width <= 0 or self.height <= 0:
             raise RuntimeError(f"Cannot determine video resolution: {self.path}")
-        fps = float(self.capture.get(cv2.CAP_PROP_FPS))
+        fps = float(self.capture.get(cv.CAP_PROP_FPS))
         self.fps = fps if fps > 0 else float(fallback_fps)
-        declared = int(self.capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        declared = int(self.capture.get(cv.CAP_PROP_FRAME_COUNT))
         self.total_frames = declared if declared > 0 else None
         self._index = 0
 
@@ -126,10 +127,11 @@ class VideoSource(FrameSource):
 
     def reset(self) -> None:
         self._index = 0
-        self.capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+        self.capture.set(cv.CAP_PROP_POS_FRAMES, 0)
 
     def close(self) -> None:
         self.capture.release()
+
 
 class ImageSequenceSource(FrameSource):
     """Reads an image folder, optionally using THU-HSEVI-style ts_frame.txt."""
@@ -162,7 +164,7 @@ class ImageSequenceSource(FrameSource):
         if not self.paths:
             raise RuntimeError(f"No image files found in: {self.frame_dir}")
 
-        first = read_image(self.paths[0], cv2.IMREAD_UNCHANGED)
+        first = read_image(self.paths[0], cv.IMREAD_UNCHANGED)
         if first is None:
             raise RuntimeError(f"Failed to read first image: {self.paths[0]}")
         self.height, self.width = first.shape[:2]
@@ -210,7 +212,7 @@ class ImageSequenceSource(FrameSource):
     def __iter__(self) -> Iterator[Frame]:
         self.reset()
         for index, path in enumerate(self.paths):
-            image = read_image(path, cv2.IMREAD_UNCHANGED)
+            image = read_image(path, cv.IMREAD_UNCHANGED)
             if image is None:
                 raise RuntimeError(f"Failed to read image: {path}")
             yield Frame(_to_gray(image), int(self.timestamps_us[index]), index)
@@ -228,13 +230,16 @@ class ImageSequenceSource(FrameSource):
             "frames": self.total_frames,
             "fallback_fps": self.fps,
             "has_timestamp_file": self.has_timestamps,
-            "timestamp_file": str(self._timestamp_file) if self._timestamp_file else None,
+            "timestamp_file": str(self._timestamp_file)
+            if self._timestamp_file
+            else None,
             "timestamp_start_us": int(self.timestamps_us[0]),
             "timestamp_end_us": int(self.timestamps_us[-1]),
             "duration_s": float(
                 (self.timestamps_us[-1] - self.timestamps_us[0]) / 1_000_000.0
             ),
         }
+
 
 def open_source(
     path: str | Path,

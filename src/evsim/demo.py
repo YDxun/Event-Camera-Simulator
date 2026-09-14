@@ -1,10 +1,10 @@
-﻿"""Self-contained synthetic high-FPS demo and video generation."""
+"""Self-contained synthetic high-FPS demo and video generation."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-import cv2
+import cv2 as cv
 import numpy as np
 
 
@@ -28,6 +28,7 @@ def demo_frame(width: int, height: int, index: int, total: int) -> np.ndarray:
     frame *= ramp
     return np.clip(frame, 0.0, 255.0).astype(np.uint8)
 
+
 def write_synthetic_video(
     path: str | Path,
     fps: float,
@@ -38,9 +39,9 @@ def write_synthetic_video(
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     total = int(round(fps * seconds))
-    writer = cv2.VideoWriter(
+    writer = cv.VideoWriter(
         str(path),
-        cv2.VideoWriter_fourcc(*"MJPG"),
+        cv.VideoWriter_fourcc(*"MJPG"),
         float(fps),
         (width, height),
         isColor=True,
@@ -49,9 +50,10 @@ def write_synthetic_video(
         raise RuntimeError(f"Could not create demo video: {path}")
     for index in range(total):
         gray = demo_frame(width, height, index, total)
-        writer.write(cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR))
+        writer.write(cv.cvtColor(gray, cv.COLOR_GRAY2BGR))
     writer.release()
     return path
+
 
 def run_demo(
     output_dir: str | Path,
@@ -67,7 +69,9 @@ def run_demo(
 
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
-    input_video = write_synthetic_video(output / "input_960fps.avi", fps, seconds, width, height)
+    input_video = write_synthetic_video(
+        output / "input_960fps.avi", fps, seconds, width, height
+    )
 
     config = SimulatorConfig()
     config.input.fallback_fps = fps
@@ -107,5 +111,7 @@ def run_demo(
     final_frame = demo_frame(width, height, total - 1, total)
     preview = EventVideoRenderer(width, height, config.visualization)
     preview.add(result.events, final_frame, total * 1_000_000)
-    cv2.imwrite(str(output / "event_preview.png"), preview.render_combined_panel(final_frame))
+    cv.imwrite(
+        str(output / "event_preview.png"), preview.render_combined_panel(final_frame)
+    )
     return stats

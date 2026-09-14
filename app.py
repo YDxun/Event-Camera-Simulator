@@ -1,15 +1,15 @@
-﻿"""Lightweight Streamlit UI for the Python event-camera simulator."""
+"""Lightweight Streamlit UI for the Python event-camera simulator."""
 
 from __future__ import annotations
 
 import shutil
 import subprocess
-import traceback
 import tempfile
+import traceback
 import zipfile
 from pathlib import Path
 
-import cv2
+import cv2 as cv
 import numpy as np
 import streamlit as st
 from imageio_ffmpeg import get_ffmpeg_exe
@@ -46,6 +46,7 @@ def _save_upload(upload, workdir: Path, default_suffix: str) -> Path:
     path = workdir / f"input{suffix}"
     path.write_bytes(upload.getbuffer())
     return path
+
 
 def _transcode_for_browser(source: Path, destination: Path) -> Path:
     """Convert a local video to browser-compatible H.264 MP4."""
@@ -96,7 +97,9 @@ def _build_config(
     max_frames: int,
     fallback_fps: float | None = None,
 ) -> SimulatorConfig:
-    preset_path = ROOT / "configs" / ("ideal.json" if preset == "Ideal" else "realistic.json")
+    preset_path = (
+        ROOT / "configs" / ("ideal.json" if preset == "Ideal" else "realistic.json")
+    )
     config = SimulatorConfig.load(preset_path)
     config.sensor.positive_threshold = positive_threshold
     config.sensor.negative_threshold = negative_threshold
@@ -154,10 +157,11 @@ def _run_ui_simulation(
     _transcode_for_browser(raw_path, browser_video)
     return result, browser_video
 
+
 def _to_rgb(image: np.ndarray) -> np.ndarray:
     if image.ndim == 2:
-        return cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-    return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        return cv.cvtColor(image, cv.COLOR_GRAY2RGB)
+    return cv.cvtColor(image, cv.COLOR_BGR2RGB)
 
 
 def _render_preview(
@@ -222,6 +226,7 @@ def _prepare_input(
         raise ValueError("Please choose an image-sequence ZIP file")
     zip_path = _save_upload(uploaded_zip, workdir, ".zip")
     return _safe_extract_zip(zip_path, workdir / "sequence")
+
 
 def main() -> None:
     st.set_page_config(page_title="Event Camera Simulator", layout="wide")
@@ -430,7 +435,9 @@ def main() -> None:
         if input_playback and Path(input_playback).exists():
             st.video(input_playback)
         else:
-            st.info("The current source is an image sequence, so only the input preview is shown.")
+            st.info(
+                "The current source is an image sequence, so only the input preview is shown."
+            )
     with playback_cols[1]:
         st.markdown("**Event video (H.264)**")
         if video_path.exists():

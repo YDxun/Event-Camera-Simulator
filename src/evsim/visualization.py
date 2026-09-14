@@ -1,10 +1,10 @@
-﻿"""Accumulated event visualization and illustrative video output."""
+"""Accumulated event visualization and illustrative video output."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-import cv2
+import cv2 as cv
 import numpy as np
 
 from .config import VisualizationConfig
@@ -22,7 +22,7 @@ class EventVideoRenderer:
         self.window_start_us: int | None = None
         self.window_end_us: int | None = None
         self.last_frame: np.ndarray | None = None
-        self.writer: cv2.VideoWriter | None = None
+        self.writer: cv.VideoWriter | None = None
         self.actual_output_path: Path | None = None
         self.frames_written = 0
 
@@ -73,15 +73,15 @@ class EventVideoRenderer:
 
     def render_overlay(self, frame: np.ndarray) -> np.ndarray:
         if frame.ndim == 2:
-            image = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+            image = cv.cvtColor(frame, cv.COLOR_GRAY2BGR)
         elif frame.shape[2] == 3:
             image = frame.copy()
         else:
-            image = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
+            image = cv.cvtColor(frame, cv.COLOR_BGRA2BGR)
         event_frame = self.render_event_frame()
         mask = (self.on_count > 0) | (self.off_count > 0)
         opacity = float(self.config.overlay_opacity)
-        blended = cv2.addWeighted(image, 1.0 - opacity, event_frame, opacity, 0.0)
+        blended = cv.addWeighted(image, 1.0 - opacity, event_frame, opacity, 0.0)
         image[mask] = blended[mask]
         return image
 
@@ -94,38 +94,65 @@ class EventVideoRenderer:
 
     def render_representation_panel(self, frame: np.ndarray) -> np.ndarray:
         if frame.ndim == 2:
-            original = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+            original = cv.cvtColor(frame, cv.COLOR_GRAY2BGR)
         else:
             original = frame.copy()
         binary = self.render_binary_frame()
-        count = cv2.cvtColor(self.render_count_frame(), cv2.COLOR_GRAY2BGR)
+        count = cv.cvtColor(self.render_count_frame(), cv.COLOR_GRAY2BGR)
         overlay = self.render_overlay(frame)
         panel = np.hstack((original, binary, count, overlay))
         labels = ("Input", "Binary events", "Event count", "Overlay")
         for index, label in enumerate(labels):
-            cv2.putText(
+            cv.putText(
                 panel,
                 label,
                 (index * self.width + 8, 22),
-                cv2.FONT_HERSHEY_SIMPLEX,
+                cv.FONT_HERSHEY_SIMPLEX,
                 0.55,
                 (0, 255, 0),
                 1,
-                cv2.LINE_AA,
+                cv.LINE_AA,
             )
         return panel
 
     def render_combined_panel(self, frame: np.ndarray) -> np.ndarray:
         if frame.ndim == 2:
-            original = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+            original = cv.cvtColor(frame, cv.COLOR_GRAY2BGR)
         else:
             original = frame.copy()
         events = self.render_event_frame()
         overlay = self.render_overlay(frame)
         panel = np.hstack((original, events, overlay))
-        cv2.putText(panel, "Input", (8, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 0), 1, cv2.LINE_AA)
-        cv2.putText(panel, "Events (ON red / OFF blue)", (self.width + 8, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 0), 1, cv2.LINE_AA)
-        cv2.putText(panel, "Overlay", (2 * self.width + 8, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 0), 1, cv2.LINE_AA)
+        cv.putText(
+            panel,
+            "Input",
+            (8, 22),
+            cv.FONT_HERSHEY_SIMPLEX,
+            0.55,
+            (0, 255, 0),
+            1,
+            cv.LINE_AA,
+        )
+        cv.putText(
+            panel,
+            "Events (ON red / OFF blue)",
+            (self.width + 8, 22),
+            cv.FONT_HERSHEY_SIMPLEX,
+            0.55,
+            (0, 255, 0),
+            1,
+            cv.LINE_AA,
+        )
+        cv.putText(
+            panel,
+            "Overlay",
+            (2 * self.width + 8, 22),
+            cv.FONT_HERSHEY_SIMPLEX,
+            0.55,
+            (0, 255, 0),
+            1,
+            cv.LINE_AA,
+        )
         return panel
 
     def open(self, output_path: str | Path) -> Path:
@@ -133,12 +160,12 @@ class EventVideoRenderer:
         path.parent.mkdir(parents=True, exist_ok=True)
         candidates: list[tuple[Path, int]] = []
         if path.suffix.lower() == ".mp4":
-            candidates.append((path, cv2.VideoWriter_fourcc(*"mp4v")))
-            candidates.append((path, cv2.VideoWriter_fourcc(*"avc1")))
-        candidates.append((path.with_suffix(".avi"), cv2.VideoWriter_fourcc(*"MJPG")))
+            candidates.append((path, cv.VideoWriter_fourcc(*"mp4v")))
+            candidates.append((path, cv.VideoWriter_fourcc(*"avc1")))
+        candidates.append((path.with_suffix(".avi"), cv.VideoWriter_fourcc(*"MJPG")))
         panel_size = (self.width * 3, self.height)
         for candidate, fourcc in candidates:
-            writer = cv2.VideoWriter(
+            writer = cv.VideoWriter(
                 str(candidate),
                 fourcc,
                 float(self.config.playback_fps),
