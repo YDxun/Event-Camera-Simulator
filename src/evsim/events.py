@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Self
+from tempfile import TemporaryDirectory
+from typing import Any, Protocol, Self
 
 import numpy as np
 
@@ -21,6 +22,88 @@ EVENT_DTYPE = np.dtype(
         ("polarity", np.int8),
     ]
 )
+
+
+class EventSink(Protocol):
+    """Incremental event destination used by memory-bounded simulations."""
+
+    def write(self, events: np.ndarray) -> None: ...
+
+    def close(self) -> None: ...
+
+    def abort(self) -> None: ...
+
+
+class DiskEventSink:
+    """Stream CSV output and assemble NPZ output through disk-backed chunks."""
+
+    def __init__(
+        self, csv_path: str | Path | None = None, npz_path: str | Path | None = None
+    ) -> None:
+        if not csv_path and not npz_path:
+            raise ValueError("DiskEventSink requires a CSV or NPZ output path")
+        self.csv_path = Path(csv_path) if csv_path else None
+        self.npz_path = Path(npz_path) if npz_path else None
+        self._csv = None
+        self._temporary = TemporaryDirectory(prefix="evsim_events_")
+        self._chunk_paths: list[Path] = []
+        self._count = 0
+        if self.csv_path:
+            self.csv_path.parent.mkdir(parents=True, exist_ok=True)
+            self._csv = self.csv_path.open("w", encoding="utf-8", newline="")
+            self._csv.write("timestamp_s,x,y,polarity\n")
+
+    def write(self, events: np.ndarray) -> None:
+        if not events.size:
+            return
+        ordered = sort_events(events)
+        if self._csv is not None:
+            self._csv.writelines(
+                f"{int(row['timestamp_us']) / 1_000_000.0:.9f},"
+                f"{int(row['x'])},{int(row['y'])},{int(row['polarity'])}\n"
+                for row in ordered
+            )
+        if self.npz_path:
+            path = (
+                Path(self._temporary.name) / f"chunk_{len(self._chunk_paths):08d}.npy"
+            )
+            np.save(path, ordered, allow_pickle=False)
+            self._chunk_paths.append(path)
+        self._count += int(ordered.size)
+
+    def close(self) -> None:
+        try:
+            if self._csv is not None:
+                self._csv.close()
+                self._csv = None
+            if self.npz_path:
+                self.npz_path.parent.mkdir(parents=True, exist_ok=True)
+                if self._count == 0:
+                    np.savez_compressed(self.npz_path, events=empty_events())
+                    return
+                array_path = Path(self._temporary.name) / "events.npy"
+                combined = np.lib.format.open_memmap(
+                    array_path, mode="w+", dtype=EVENT_DTYPE, shape=(self._count,)
+                )
+                offset = 0
+                for path in self._chunk_paths:
+                    chunk = np.load(path, mmap_mode="r", allow_pickle=False)
+                    combined[offset : offset + chunk.size] = chunk
+                    offset += int(chunk.size)
+                combined.flush()
+                np.savez_compressed(self.npz_path, events=combined)
+                del combined
+        finally:
+            self._temporary.cleanup()
+
+    def abort(self) -> None:
+        if self._csv is not None:
+            self._csv.close()
+            self._csv = None
+        self._temporary.cleanup()
+        for path in (self.csv_path, self.npz_path):
+            if path is not None:
+                path.unlink(missing_ok=True)
 
 
 def empty_events() -> np.ndarray:

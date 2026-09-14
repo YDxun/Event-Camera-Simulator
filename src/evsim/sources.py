@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Self
 
+import av
 import cv2 as cv
 import numpy as np
 
@@ -42,6 +43,8 @@ class FrameSource:
     height: int
     fps: float | None
     total_frames: int | None
+    timestamp_source: str
+    timestamp_warning: str | None
 
     def __iter__(self) -> Iterator[Frame]:
         """Iterate over frames sequentially in chronological order."""
@@ -134,10 +137,7 @@ def _to_gray(image: np.ndarray) -> np.ndarray:
 
 
 class VideoSource(FrameSource):
-    """Reads frames, FPS and resolution from a video file via OpenCV VideoCapture.
-
-    Timestamps are synthesized from frame index and frame rate:
-    `timestamp_us = round((index / fps) * 1_000_000.0)`.
+    """Read video frames and container presentation timestamps with PyAV.
 
     Args:
         path: Path to video file (.mp4, .avi, etc.).
@@ -148,42 +148,56 @@ class VideoSource(FrameSource):
         self.path = Path(path)
         if not self.path.is_file():
             raise FileNotFoundError(f"Video not found: {self.path}")
-        self.capture = cv.VideoCapture(str(self.path))
-        if not self.capture.isOpened():
-            raise RuntimeError(f"Failed to open video: {self.path}")
-        self.width = int(self.capture.get(cv.CAP_PROP_FRAME_WIDTH))
-        self.height = int(self.capture.get(cv.CAP_PROP_FRAME_HEIGHT))
-        if self.width <= 0 or self.height <= 0:
-            ok, first_frame = self.capture.read()
-            if ok and first_frame is not None and first_frame.size > 0:
-                self.height, self.width = first_frame.shape[:2]
-            self.capture.set(cv.CAP_PROP_POS_FRAMES, 0)
+        try:
+            self.container = av.open(str(self.path))
+            self.stream = self.container.streams.video[0]
+        except (av.error.FFmpegError, IndexError, OSError) as exc:
+            raise RuntimeError(f"Failed to open video: {self.path}") from exc
+        self.width = int(self.stream.codec_context.width)
+        self.height = int(self.stream.codec_context.height)
         if self.width <= 0 or self.height <= 0:
             raise RuntimeError(f"Cannot determine video resolution: {self.path}")
-        fps = float(self.capture.get(cv.CAP_PROP_FPS))
+        fps = float(self.stream.average_rate) if self.stream.average_rate else 0.0
         self.fps = fps if fps > 0 else float(fallback_fps)
-        declared = int(self.capture.get(cv.CAP_PROP_FRAME_COUNT))
+        declared = int(self.stream.frames)
         self.total_frames = declared if declared > 0 else None
+        self.timestamp_source = "pts"
+        self.timestamp_warning = None
         self._index = 0
 
     def __iter__(self) -> Iterator[Frame]:
         self.reset()
-        while True:
-            ok, image = self.capture.read()
-            if not ok:
-                break
-            if image is None or image.size == 0:
-                continue
-            timestamp_us = round((self._index / self.fps) * 1_000_000.0)
-            yield Frame(_to_gray(image), timestamp_us, self._index)
+        first_pts_seconds: float | None = None
+        previous_us = -1
+        for decoded in self.container.decode(self.stream):
+            if decoded.pts is not None and decoded.time_base is not None:
+                pts_seconds = float(decoded.pts * decoded.time_base)
+                if first_pts_seconds is None:
+                    first_pts_seconds = pts_seconds
+                timestamp_us = round((pts_seconds - first_pts_seconds) * 1_000_000.0)
+            else:
+                timestamp_us = round((self._index / self.fps) * 1_000_000.0)
+                self.timestamp_source = "pts_with_fps_fallback"
+                self.timestamp_warning = (
+                    "One or more frames had no PTS; FPS fallback was used."
+                )
+            if timestamp_us <= previous_us:
+                timestamp_us = previous_us + max(1, round(1_000_000.0 / self.fps))
+                self.timestamp_source = "pts_with_fps_fallback"
+                self.timestamp_warning = (
+                    "Non-monotonic or missing PTS was repaired using FPS."
+                )
+            image = decoded.to_ndarray(format="gray")
+            yield Frame(image, timestamp_us, self._index)
+            previous_us = timestamp_us
             self._index += 1
 
     def reset(self) -> None:
         self._index = 0
-        self.capture.set(cv.CAP_PROP_POS_FRAMES, 0)
+        self.container.seek(0, stream=self.stream)
 
     def close(self) -> None:
-        self.capture.release()
+        self.container.close()
 
 
 class ImageSequenceSource(FrameSource):
@@ -204,6 +218,7 @@ class ImageSequenceSource(FrameSource):
         path: str | Path,
         fallback_fps: float = 960.0,
         timestamp_scale_us: float = 1.0,
+        allow_timestamp_fallback: bool = False,
     ):
         self.path = Path(path)
         if not self.path.exists():
@@ -235,7 +250,9 @@ class ImageSequenceSource(FrameSource):
         self.total_frames = len(self.paths)
 
         self.timestamps_us = self._load_timestamps(
-            fallback_fps=fallback_fps, scale=timestamp_scale_us
+            fallback_fps=fallback_fps,
+            scale=timestamp_scale_us,
+            allow_fallback=allow_timestamp_fallback,
         )
         self.has_timestamps = self._timestamp_file is not None
         self._index = 0
@@ -251,8 +268,12 @@ class ImageSequenceSource(FrameSource):
                 return candidate
         return None
 
-    def _load_timestamps(self, fallback_fps: float, scale: float) -> np.ndarray:
+    def _load_timestamps(
+        self, fallback_fps: float, scale: float, allow_fallback: bool
+    ) -> np.ndarray:
         self._timestamp_file = self._find_timestamp_file()
+        self.timestamp_source = "fps"
+        self.timestamp_warning = None
         values: list[float] = []
         if self._timestamp_file is not None:
             text = self._timestamp_file.read_text(encoding="utf-8", errors="ignore")
@@ -260,13 +281,24 @@ class ImageSequenceSource(FrameSource):
                 match = re.search(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?", line)
                 if match:
                     values.append(float(match.group(0)))
-        if len(values) >= len(self.paths):
-            timestamps = np.rint(np.asarray(values[: len(self.paths)]) * scale).astype(
-                np.int64
-            )
-            if np.all(np.diff(timestamps) > 0):
+        if self._timestamp_file is not None and len(values) == len(self.paths):
+            raw_timestamps = np.asarray(values[: len(self.paths)], dtype=np.float64)
+            if np.isfinite(raw_timestamps).all():
+                timestamps = np.rint(raw_timestamps * scale).astype(np.int64)
+            else:
+                timestamps = np.empty(0, dtype=np.int64)
+            if timestamps.size and np.all(np.diff(timestamps) > 0):
+                self.timestamp_source = "timestamp_file"
                 return timestamps
-        self._timestamp_file = None
+        if self._timestamp_file is not None:
+            message = (
+                f"Invalid timestamp file {self._timestamp_file}: expected exactly "
+                f"{len(self.paths)} finite, strictly increasing values"
+            )
+            if not allow_fallback:
+                raise ValueError(message)
+            self.timestamp_warning = message + "; FPS fallback was used."
+            self._timestamp_file = None
         if fallback_fps <= 0:
             raise ValueError("fallback_fps must be positive when timestamps are absent")
         index = np.arange(len(self.paths), dtype=np.float64)
@@ -298,6 +330,8 @@ class ImageSequenceSource(FrameSource):
             else None,
             "timestamp_start_us": int(self.timestamps_us[0]),
             "timestamp_end_us": int(self.timestamps_us[-1]),
+            "timestamp_source": self.timestamp_source,
+            "timestamp_warning": self.timestamp_warning,
             "duration_s": float(
                 (self.timestamps_us[-1] - self.timestamps_us[0]) / 1_000_000.0
             ),
@@ -308,6 +342,7 @@ def open_source(
     path: str | Path,
     fallback_fps: float = 960.0,
     timestamp_scale_us: float = 1.0,
+    allow_timestamp_fallback: bool = False,
 ) -> FrameSource:
     """Factory function returning the appropriate FrameSource for a file or directory.
 
@@ -328,6 +363,7 @@ def open_source(
             source_path,
             fallback_fps=fallback_fps,
             timestamp_scale_us=timestamp_scale_us,
+            allow_timestamp_fallback=allow_timestamp_fallback,
         )
     if source_path.is_file():
         return VideoSource(source_path, fallback_fps=fallback_fps)
@@ -338,6 +374,7 @@ def inspect_source(
     path: str | Path,
     fallback_fps: float = 960.0,
     timestamp_scale_us: float = 1.0,
+    allow_timestamp_fallback: bool = False,
 ) -> dict[str, object]:
     """Inspect input metadata (resolution, frame count, FPS, duration) without full decode.
 
@@ -349,7 +386,9 @@ def inspect_source(
     Returns:
         Dictionary containing metadata summary.
     """
-    source = open_source(path, fallback_fps, timestamp_scale_us)
+    source = open_source(
+        path, fallback_fps, timestamp_scale_us, allow_timestamp_fallback
+    )
     try:
         if isinstance(source, ImageSequenceSource):
             return source.inspect()
@@ -365,6 +404,8 @@ def inspect_source(
                 if source.total_frames and source.fps
                 else None
             ),
+            "timestamp_source": source.timestamp_source,
+            "timestamp_warning": source.timestamp_warning,
         }
     finally:
         source.close()

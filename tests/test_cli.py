@@ -3,6 +3,8 @@ from pathlib import Path
 
 from evsim.cli import main
 from evsim.config import SimulatorConfig
+from evsim.demo import write_synthetic_video
+from evsim.events import EventStream
 
 
 def test_validate_cli_passes(capsys):
@@ -38,3 +40,30 @@ def test_benchmark_cli_executes(capsys):
     assert main(["benchmark", "--width", "32", "--height", "24", "--frames", "5"]) == 0
     result = json.loads(capsys.readouterr().out)
     assert "speedup_loop_over_vectorized" in result
+
+
+def test_simulate_cli_streams_csv_and_npz(tmp_path: Path, capsys):
+    video = tmp_path / "input.avi"
+    csv_path = tmp_path / "events.csv"
+    npz_path = tmp_path / "events.npz"
+    write_synthetic_video(video, fps=200.0, seconds=0.03, width=32, height=24)
+    assert (
+        main(
+            [
+                "simulate",
+                "--input",
+                str(video),
+                "--output-csv",
+                str(csv_path),
+                "--output-npz",
+                str(npz_path),
+                "--stream",
+                "--no-progress",
+            ]
+        )
+        == 0
+    )
+    result = json.loads(capsys.readouterr().out)
+    assert result["event_count"] > 0
+    assert EventStream.load_csv(csv_path).count == result["event_count"]
+    assert EventStream.load_npz(npz_path).count == result["event_count"]

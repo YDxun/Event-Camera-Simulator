@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest -q
+      - run: uv run evsim validate
+      - name: Smoke-test Streamlit
+        run: |
+          uv run streamlit run app.py \
+            --server.headless true \
+            --server.address 127.0.0.1 \
+            --server.port 8765 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..30}; do
+            curl --fail http://127.0.0.1:8765/_stcore/health && exit 0
+            sleep 1
+          done
+          exit 1
+      - name: Smoke-test GUI import
+        run: uv run python -c "from evsim.gui import MainWindow; from PySide6.QtWidgets import QApplication; app = QApplication([]); window = MainWindow(); assert window.windowTitle()"

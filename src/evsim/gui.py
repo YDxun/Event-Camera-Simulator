@@ -119,9 +119,6 @@ class SimulationWorker(QThread):
                 last_timestamp_us = frame.timestamp_us
                 self.progress.emit(frames_processed, total_frames)
 
-            if self.renderer is not None:
-                self.renderer.close()
-
             elapsed = time.perf_counter() - started
             stream = EventStream.concatenate(events_list)
             duration_us = last_timestamp_us - (
@@ -169,6 +166,11 @@ class SimulationWorker(QThread):
         except Exception as exc:  # noqa: BLE001
             self.error.emit(str(exc))
         finally:
+            if self.renderer is not None:
+                try:
+                    self.renderer.close()
+                except Exception as exc:  # noqa: BLE001
+                    self.error.emit(f"Failed to close video output: {exc}")
             self.source.close()
 
 
@@ -530,7 +532,11 @@ class MainWindow(QMainWindow):
                         self, "Missing Input", "Please specify an input path."
                     )
                     return
-                source = open_source(path_str, fallback_fps=config.input.fallback_fps)
+                source = open_source(
+                    path_str,
+                    fallback_fps=config.input.fallback_fps,
+                    allow_timestamp_fallback=config.input.allow_timestamp_fallback,
+                )
 
             renderer = None
             if config.visualization.output_video:

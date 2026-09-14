@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -40,15 +41,43 @@ from evsim.pipeline import SimulationResult, simulate_source
 from evsim.sources import open_source
 from evsim.visualization import EventVideoRenderer
 
+MAX_ZIP_FILES = 10_000
+MAX_ZIP_MEMBER_BYTES = 512 * 1024 * 1024
+MAX_ZIP_TOTAL_BYTES = 2 * 1024 * 1024 * 1024
+
+
+def _clear_previous_workdir(session_state) -> None:
+    previous = session_state.pop("_workdir", None)
+    if previous is not None:
+        previous.cleanup()
+
 
 def _safe_extract_zip(path: Path, destination: Path) -> Path:
     destination.mkdir(parents=True, exist_ok=True)
     root = destination.resolve()
     with zipfile.ZipFile(path) as archive:
-        for member in archive.infolist():
+        members = archive.infolist()
+        if len(members) > MAX_ZIP_FILES:
+            raise ValueError(f"ZIP contains more than {MAX_ZIP_FILES:,} entries")
+        total_size = sum(member.file_size for member in members)
+        if total_size > MAX_ZIP_TOTAL_BYTES:
+            raise ValueError("ZIP expands beyond the 2 GiB safety limit")
+        for member in members:
             target = (root / member.filename).resolve()
             if not target.is_relative_to(root):
                 raise ValueError(f"Unsafe ZIP member: {member.filename}")
+            mode = member.external_attr >> 16
+            if stat.S_ISLNK(mode):
+                raise ValueError(
+                    f"ZIP symbolic links are not allowed: {member.filename}"
+                )
+            file_type = stat.S_IFMT(mode)
+            if file_type not in (0, stat.S_IFREG, stat.S_IFDIR):
+                raise ValueError(f"Unsupported ZIP member type: {member.filename}")
+            if member.file_size > MAX_ZIP_MEMBER_BYTES:
+                raise ValueError(
+                    f"ZIP member exceeds the 512 MiB limit: {member.filename}"
+                )
             if member.is_dir():
                 target.mkdir(parents=True, exist_ok=True)
                 continue
@@ -162,6 +191,7 @@ def _run_ui_simulation(
         input_path,
         fallback_fps=config.input.fallback_fps,
         timestamp_scale_us=config.input.timestamp_scale_us,
+        allow_timestamp_fallback=config.input.allow_timestamp_fallback,
     )
     try:
         renderer = EventVideoRenderer(source.width, source.height, config.visualization)
@@ -359,7 +389,9 @@ def main() -> None:
         )
 
     if submitted:
-        workdir = Path(tempfile.mkdtemp(prefix="evsim_ui_"))
+        _clear_previous_workdir(st.session_state)
+        temporary = tempfile.TemporaryDirectory(prefix="evsim_ui_")
+        workdir = Path(temporary.name)
         try:
             input_path = _prepare_input(
                 source_mode, uploaded_video, uploaded_zip, workdir
@@ -416,7 +448,9 @@ def main() -> None:
                 "timestamp_mode": timestamp_mode,
                 "fallback_fps": fallback_fps,
             }
+            st.session_state["_workdir"] = temporary
         except Exception as exc:  # noqa: BLE001
+            temporary.cleanup()
             st.error(f"Simulation failed: {exc}")
             with st.expander("Technical details"):
                 st.code(traceback.format_exc())

@@ -30,8 +30,8 @@ High-FPS Video / Image Sequence + Sensor Config
 git clone https://github.com/YDxun/Event-Camera-Simulator.git
 cd Event-Camera-Simulator
 
-# Install editable package with development dependencies using uv
-uv sync --extra dev
+# Install the complete locked development environment
+uv sync --all-extras --locked
 
 # Or with pip
 python -m pip install -e ".[dev]"
@@ -58,6 +58,12 @@ uv run evsim simulate \
   --output-npz output/events.npz \
   --video output/events.avi
 ```
+
+For long inputs, add `--stream` with `--output-csv` and/or `--output-npz` to
+write event chunks through disk instead of retaining the complete stream in RAM.
+Video timestamps come from container PTS via PyAV, so variable-frame-rate input
+is preserved. Image sequences with an invalid `ts_frame.txt` fail by default;
+use `--allow-timestamp-fallback` only when fixed-FPS recovery is intentional.
 
 ### 3. Run Core Analytical Validation
 Verifies consistency across 12 formal model-consistency checks (static scene suppression, ramp firing, microsecond alignment, refractory suppression, and backend equivalence):
@@ -101,7 +107,7 @@ Live demo: [Streamlit Public App](https://event-camera-simulator-7mlnyhk52f9fp4y
 ## Architecture Overview
 
 ```text
-Input Video / Frames (OpenCV / ImageSequence)
+Input Video / Frames (PyAV PTS / ImageSequence)
                      │
                      ▼
   Photometric Preprocessing (Normalized DN -> Optional Linearization -> Log Intensity)

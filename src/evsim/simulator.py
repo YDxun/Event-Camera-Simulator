@@ -192,6 +192,14 @@ class EventSimulator:
         neg_counts = _crossing_counts(-delta, self.neg_thresholds)
         contrast_counts = pos_counts + neg_counts
         total_contrast = int(contrast_counts.sum())
+        limit = self.config.runtime.max_candidate_events_per_frame
+        if limit and total_contrast > limit:
+            raise RuntimeError(
+                f"Frame pair would generate {total_contrast:,} candidate events, "
+                f"exceeding runtime.max_candidate_events_per_frame={limit:,}. "
+                "Raise the contrast threshold, enable a refractory period, or increase "
+                "the configured limit (0 disables it)."
+            )
 
         pixel_parts: list[np.ndarray] = []
         time_parts: list[np.ndarray] = []
@@ -233,6 +241,12 @@ class EventSimulator:
             mean = self.config.noise.background_rate_hz * dt_s
             background_counts = self.rng.poisson(mean, size=contrast_counts.size)
             total_background = int(background_counts.sum())
+            if limit and total_contrast + total_background > limit:
+                raise RuntimeError(
+                    f"Frame pair would generate {total_contrast + total_background:,} "
+                    "candidate events including background activity, exceeding "
+                    f"runtime.max_candidate_events_per_frame={limit:,}."
+                )
             if total_background:
                 bg_pixels = np.repeat(
                     np.arange(background_counts.size, dtype=np.int64),

@@ -20,6 +20,7 @@ class InputConfig:
         gamma: Exponent for gamma linearization (typically 2.2 for sRGB).
         bit_depth: Sensor bit depth (8 or 16), determines normalization scale (2^N - 1).
         timestamp_scale_us: Scaling factor to convert raw image timestamps into microseconds.
+        allow_timestamp_fallback: Allow malformed timestamp files to fall back to FPS.
     """
 
     fallback_fps: float = 960.0
@@ -27,6 +28,7 @@ class InputConfig:
     gamma: float = 2.2
     bit_depth: int = 8
     timestamp_scale_us: float = 1.0
+    allow_timestamp_fallback: bool = False
 
 
 @dataclass
@@ -119,10 +121,12 @@ class RuntimeConfig:
     Attributes:
         max_frames: Stop processing after this many frames (0 = process all frames).
         progress: Whether to show a progress bar in terminal.
+        max_candidate_events_per_frame: Safety limit before candidate expansion (0 = unlimited).
     """
 
     max_frames: int = 0
     progress: bool = True
+    max_candidate_events_per_frame: int = 10_000_000
 
 
 @dataclass
@@ -182,6 +186,8 @@ class SimulatorConfig:
             raise ValueError("visualization.overlay_opacity must be in [0, 1]")
         if self.runtime.max_frames < 0:
             raise ValueError("runtime.max_frames must be >= 0")
+        if self.runtime.max_candidate_events_per_frame < 0:
+            raise ValueError("runtime.max_candidate_events_per_frame must be >= 0")
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

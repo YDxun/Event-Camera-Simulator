@@ -15,6 +15,7 @@ The event-camera simulator uses a modular JSON-based configuration model organiz
 | `gamma` | `float` | `2.2` | `> 0` | Gamma exponent used when `linearize` is enabled (2.2 standard for sRGB/Rec.709). |
 | `bit_depth` | `int` | `8` | `8` or `16` | Sensor bit depth used to normalize digital numbers (DN) to `[0.0, 1.0]`. |
 | `timestamp_scale_us` | `float` | `1.0` | `> 0` | Multiplier applied to raw timestamp values from `ts_frame.txt` to convert them to microseconds. |
+| `allow_timestamp_fallback` | `bool` | `false` | `true` / `false` | Permit a present but invalid timestamp file to fall back to fixed FPS. The default raises an error to protect timing integrity. |
 
 ### 2. `sensor` — Analog Pixel Model Parameters
 
@@ -66,6 +67,20 @@ The event-camera simulator uses a modular JSON-based configuration model organiz
 |---|---|---|---|
 | `max_frames` | `int` | `0` | Maximum number of frames to process (`0` = process until end of source). |
 | `progress` | `bool` | `true` | Display a terminal progress bar (`tqdm`) during simulation. |
+| `max_candidate_events_per_frame` | `int` | `10000000` | Maximum candidate events expanded for one frame pair (`0` = unlimited). Prevents accidental memory exhaustion from extreme thresholds. |
+
+## Timestamp and streaming behavior
+
+Video frames use container presentation timestamps (PTS) when available. A missing
+or non-monotonic PTS is repaired from the configured fallback FPS and recorded in
+the result as `timestamp_source` and `timestamp_warning`. Image timestamp files are
+strict by default because silently replacing experimental timing can invalidate the
+event stream.
+
+`evsim simulate --stream` keeps per-frame event chunks off the Python heap. CSV is
+written incrementally; NPZ is assembled from temporary disk-backed chunks while
+preserving the existing `events` array format. At least one event output path is
+required in streaming mode.
 
 ---
 
@@ -88,4 +103,3 @@ Simplified enhanced model with phenomenological sensor non-idealities:
 - Pixel refractory period ($100\ \mu\text{s}$)
 - Inverse gamma photometric linearization enabled ($\gamma = 2.2$)
 - $5\text{ ms}$ accumulation window for crisp event preview
-

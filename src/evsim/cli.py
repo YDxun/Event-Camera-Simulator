@@ -12,7 +12,7 @@ import tyro
 
 from .config import SimulatorConfig
 from .demo import run_demo
-from .events import EventStream
+from .events import DiskEventSink, EventStream
 from .pipeline import simulate_source
 from .sources import inspect_source, open_source
 from .validation import benchmark_backends, run_core_validation
@@ -62,6 +62,8 @@ class InspectCmd:
     """Optional configuration JSON file."""
     fallback_fps: float | None = None
     """Fallback FPS if not present in source metadata."""
+    allow_timestamp_fallback: bool = False
+    """Allow an invalid image timestamp file to fall back to fixed FPS."""
 
     def run(self) -> int:
         cfg = SimulatorConfig.load(self.config) if self.config else SimulatorConfig()
@@ -70,6 +72,7 @@ class InspectCmd:
             self.input,
             fallback_fps=fps,
             timestamp_scale_us=cfg.input.timestamp_scale_us,
+            allow_timestamp_fallback=self.allow_timestamp_fallback,
         )
         print(json.dumps(metadata, indent=2))
         return 0
@@ -107,26 +110,36 @@ class SimulateCmd:
     """Maximum number of frames to process."""
     no_progress: bool = False
     """Disable progress bar."""
+    allow_timestamp_fallback: bool = False
+    """Allow an invalid image timestamp file to fall back to fixed FPS."""
+    stream: bool = False
+    """Write events incrementally instead of retaining the complete stream in memory."""
 
     def run(self) -> int:
         config = SimulatorConfig.load(self.config) if self.config else SimulatorConfig()
         _apply_overrides(config, self)
+        if self.allow_timestamp_fallback:
+            config.input.allow_timestamp_fallback = True
         if self.output_csv:
             config.output.csv_path = self.output_csv
         if self.output_npz:
             config.output.npz_path = self.output_npz
         if self.video:
             config.visualization.output_video = self.video
+        if self.stream and not (config.output.csv_path or config.output.npz_path):
+            raise ValueError("--stream requires --output-csv or --output-npz")
 
         metadata = inspect_source(
             self.input,
             fallback_fps=config.input.fallback_fps,
             timestamp_scale_us=config.input.timestamp_scale_us,
+            allow_timestamp_fallback=config.input.allow_timestamp_fallback,
         )
         source = open_source(
             self.input,
             fallback_fps=config.input.fallback_fps,
             timestamp_scale_us=config.input.timestamp_scale_us,
+            allow_timestamp_fallback=config.input.allow_timestamp_fallback,
         )
         renderer = None
         if config.visualization.output_video:
@@ -135,12 +148,19 @@ class SimulateCmd:
             )
             renderer.open(config.visualization.output_video)
         try:
+            sink = (
+                DiskEventSink(config.output.csv_path, config.output.npz_path)
+                if self.stream
+                else None
+            )
             result = simulate_source(
                 source,
                 config,
                 max_frames=config.runtime.max_frames or None,
                 progress=config.runtime.progress,
                 renderer=renderer,
+                retain_events=not self.stream,
+                event_sink=sink,
             )
         finally:
             source.close()
@@ -148,7 +168,13 @@ class SimulateCmd:
         stats = dict(result.statistics)
         stats["input_metadata"] = metadata
         stats["video_path"] = result.video_path
-        _write_result(stats, result.event_stream, config)
+        if self.stream:
+            if config.output.statistics_path:
+                path = Path(config.output.statistics_path)
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(json.dumps(stats, indent=2) + "\n", encoding="utf-8")
+        else:
+            _write_result(stats, result.event_stream, config)
         print(json.dumps(stats, indent=2))
         return 0
 
