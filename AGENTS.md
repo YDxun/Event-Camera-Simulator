@@ -42,3 +42,10 @@ Requirements may be added or modified during progressing.
 
 - `import cv2 as cv` in alignment with official OpenCV style
 - use src-layout and editable install
+
+### Ruff
+
+Minimized config in `pyproject.toml`:
+
+- no `target-version` explicit: from `requires-python`
+- no `line-length`: default is OK
