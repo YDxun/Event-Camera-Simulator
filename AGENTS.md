@@ -15,6 +15,13 @@ Requirements may be added or modified during progressing.
   - design and implement and document as normal project
   - except for reqired reports and notes (for reporting and writing use)
 
+## Navigation and delivery
+
+- Repository layout and workflows: `docs/REPOSITORY_GUIDE.md`
+- Demo flow: `docs/DEMO_GUIDE.md`
+- Final submission workspace: `submission/README.md`
+- Submission archive builder: `scripts/prepare_submission.py`
+
 ## Engineering
 
 - Python first, >=3.14

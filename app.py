@@ -17,6 +17,7 @@ import streamlit as st
 try:
     from imageio_ffmpeg import get_ffmpeg_exe
 except ImportError:
+
     def get_ffmpeg_exe() -> str:
         """Fall back to a system ffmpeg when the Python helper is unavailable."""
         executable = shutil.which("ffmpeg")
@@ -25,6 +26,7 @@ except ImportError:
                 "ffmpeg is unavailable; install imageio-ffmpeg or system ffmpeg"
             )
         return executable
+
 
 ROOT = Path(__file__).resolve().parent
 # Streamlit Cloud runs the checkout directly using its existing Python runtime.

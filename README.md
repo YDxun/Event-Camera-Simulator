@@ -126,13 +126,16 @@ Input Video / Frames (OpenCV / ImageSequence)
 
 | Document | Description |
 |---|---|
+| [**Repository Guide**](docs/REPOSITORY_GUIDE.md) | Stable project layout, generated artifacts, and standard workflow. |
+| [**Demo Guide**](docs/DEMO_GUIDE.md) | Public/local demo flow and the recommended presentation sequence. |
 | [**Architecture & Design**](docs/design.md) | In-depth mathematical formulation, assumptions A1–A7, decoupled pipeline, and coordinate conventions. |
-| [**Configuration Reference**](docs/configuration.md) | Complete reference of parameters, units, physical ranges, and default presets (`ideal`, `enhanced`). |
-| [**Experimental Verification**](docs/experiments.md) | Quantitative validation: threshold sweep ($N \propto 1/C$), FPS convergence, noise ablation, and benchmarks. |
-| [**Related Work**](docs/RELATED_WORK.md) | Academic positioning and comparative analysis with ESIM, v2e, and the RPG Event-Camera Simulator. |
-| [**Submission Checklist**](output/submission/SUBMISSION_CHECKLIST.md) | Coursework deliverables checklist and technical verification commands. |
-| [**Coursework Report**](output/submission/COURSE_REPORT.md) | Research report detailing motivation, model derivations, and findings. |
-| [**AI Use Report**](output/submission/AI_USE_AND_REVIEW_REPORT.md) | Formal documentation of AI assistance, review, and verification methodology. |
+| [**Configuration Reference**](docs/configuration.md) | Complete reference of parameters, units, physical ranges, and presets (`ideal`, `enhanced`). |
+| [**Experimental Verification**](docs/experiments.md) | Quantitative validation: threshold sweep, FPS convergence, noise ablation, and benchmarks. |
+| [**Related Work**](docs/RELATED_WORK.md) | Academic positioning and comparison with ESIM, v2e, and the RPG Event-Camera Simulator. |
+| [**Submission Workspace**](submission/README.md) | Final deliverable checklist and submission ZIP instructions. |
+| [**Submission Checklist**](submission/SUBMISSION_CHECKLIST.md) | Coursework deliverables checklist and technical verification commands. |
+| [**Coursework Report**](submission/COURSE_REPORT.md) | Research report detailing motivation, model derivations, and findings. |
+| [**AI Use Report**](submission/AI_USE_AND_REVIEW_REPORT.md) | Formal documentation of AI assistance, review, and verification methodology. |
 
 ---
 
@@ -148,4 +151,10 @@ uv run ruff format --check
 
 # Execute full experimental validation suite
 uv run python scripts/run_experiments.py
+
+# Assemble a clean submission ZIP after slides/video/report are ready
+uv run python scripts/prepare_submission.py \
+  --slides submission/slides.pdf \
+  --video submission/presentation_video.mp4 \
+  --ai-report submission/AI_USE_AND_REVIEW_REPORT.pdf
 ```
