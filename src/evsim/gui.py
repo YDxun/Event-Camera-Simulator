@@ -38,7 +38,7 @@ from PySide6.QtWidgets import (
 )
 
 from .config import SimulatorConfig
-from .demo import demo_frame, write_synthetic_video
+from .demo import write_synthetic_video
 from .events import EventStream
 from .pipeline import SimulationResult
 from .sources import FrameSource, inspect_source, open_source
@@ -82,12 +82,15 @@ class SimulationWorker(QThread):
             events_list: list[np.ndarray] = []
             contrast_events = 0
             background_events = 0
+            last_frame: np.ndarray | None = None
 
             for frame in self.source:
                 if self._is_cancelled:
                     break
                 if self.max_frames and frames_processed >= self.max_frames:
                     break
+
+                last_frame = frame.image.copy()
 
                 if not sim.initialized:
                     sim.initialize(frame.image, frame.timestamp_us)
@@ -123,6 +126,27 @@ class SimulationWorker(QThread):
             stats["background_events"] = background_events
             stats["cancelled"] = self._is_cancelled
             stats["elapsed_seconds"] = elapsed
+            stats["width"] = self.source.width
+            stats["height"] = self.source.height
+
+            preview_panel = None
+            if last_frame is not None:
+                preview_renderer = EventVideoRenderer(
+                    self.source.width, self.source.height, self.config.visualization
+                )
+                all_events = stream.events
+                if all_events.size > 0:
+                    t_end = int(all_events["timestamp_us"][-1])
+                    t_start = max(
+                        0, t_end - self.config.visualization.accumulation_time_us
+                    )
+                    recent_events = all_events[all_events["timestamp_us"] >= t_start]
+                    valid = (recent_events["x"] < self.source.width) & (
+                        recent_events["y"] < self.source.height
+                    )
+                    if np.any(valid):
+                        preview_renderer.add(recent_events[valid], last_frame, t_end)
+                preview_panel = preview_renderer.render_combined_panel(last_frame)
 
             sim_res = SimulationResult(
                 event_stream=stream,
@@ -130,6 +154,7 @@ class SimulationWorker(QThread):
                 frames_processed=frames_processed,
                 elapsed_seconds=elapsed,
                 video_path=self.config.visualization.output_video,
+                preview_panel=preview_panel,
             )
             self.finished.emit(stats, sim_res)
         except Exception as exc:  # noqa: BLE001
@@ -212,7 +237,7 @@ class MainWindow(QMainWindow):
         left_layout.addWidget(source_group)
 
         # 2. Parameters Group
-        param_group = QGroupBox("2. Sensor & Simulation Parameters")
+        param_group = QGroupBox("2. Sensor && Simulation Parameters")
         param_form = QFormLayout(param_group)
 
         preset_layout = QHBoxLayout()
@@ -593,15 +618,25 @@ class MainWindow(QMainWindow):
 
     def _render_preview(self, result: SimulationResult) -> None:
         try:
-            # Render a representative preview panel (Input | Events | Overlay)
-            width, height = 320, 240
-            frame = demo_frame(width, height, 50, 100)
-            renderer = EventVideoRenderer(
-                width, height, SimulatorConfig().visualization
-            )
-            if result.events.size:
-                renderer.add(result.events, frame, 50000)
-            panel = renderer.render_combined_panel(frame)
+            if result.preview_panel is not None:
+                panel = result.preview_panel
+            else:
+                width = int(result.statistics.get("width") or 320)
+                height = int(result.statistics.get("height") or 240)
+                frame = np.full((height, width), 128, dtype=np.uint8)
+                renderer = EventVideoRenderer(
+                    width, height, SimulatorConfig().visualization
+                )
+                if result.events.size:
+                    t_end = int(result.events["timestamp_us"][-1])
+                    t_start = max(0, t_end - self.spin_accum.value())
+                    recent_events = result.events[
+                        result.events["timestamp_us"] >= t_start
+                    ]
+                    valid = (recent_events["x"] < width) & (recent_events["y"] < height)
+                    if np.any(valid):
+                        renderer.add(recent_events[valid], frame, t_end)
+                panel = renderer.render_combined_panel(frame)
 
             # Convert BGR OpenCV image to QPixmap
             rgb_panel = cv.cvtColor(panel, cv.COLOR_BGR2RGB)

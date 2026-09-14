@@ -81,3 +81,25 @@ def test_gui_stats_table_population(qapp):
             assert window.table_stats.item(row, 1).text() == "1234"
             found_events = True
     assert found_events
+
+
+def test_gui_escaped_ampersand_groupbox_title(qapp):
+    from PySide6.QtWidgets import QGroupBox
+
+    window = MainWindow()
+    titles = [b.title() for b in window.findChildren(QGroupBox)]
+    assert "2. Sensor && Simulation Parameters" in titles
+
+
+def test_gui_preview_rendering_without_video(qapp):
+    window = MainWindow()
+    window.chk_save_video.setChecked(False)
+    window.spin_max_frames.setValue(5)
+    window._start_simulation()
+    assert window.worker is not None
+    window.worker.wait()
+    qapp.processEvents()
+    assert window.lbl_status.text() == "Simulation complete!"
+    assert not window.lbl_preview_image.text().startswith("Preview rendering error")
+    assert window.lbl_preview_image.pixmap() is not None
+    assert not window.lbl_preview_image.pixmap().isNull()

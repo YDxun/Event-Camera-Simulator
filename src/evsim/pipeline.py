@@ -31,6 +31,7 @@ class SimulationResult:
     frames_processed: int
     elapsed_seconds: float
     video_path: str | None = None
+    preview_panel: np.ndarray | None = None
 
     @property
     def events(self) -> np.ndarray:
@@ -100,6 +101,9 @@ def simulate_source(
 
     if bar is not None:
         bar.close()
+    preview_panel = None
+    if renderer is not None and renderer.last_frame is not None:
+        preview_panel = renderer.render_combined_panel(renderer.last_frame)
     if renderer is not None:
         renderer.close()
 
@@ -116,7 +120,13 @@ def simulate_source(
         if elapsed > 0
         else 0.0
     )
-    result = SimulationResult(stream, stats, frames_processed, elapsed)
+    result = SimulationResult(
+        stream,
+        stats,
+        frames_processed,
+        elapsed,
+        preview_panel=preview_panel,
+    )
     if renderer is not None and renderer.actual_output_path is not None:
         result.video_path = str(renderer.actual_output_path)
     return result
