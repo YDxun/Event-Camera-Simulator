@@ -17,7 +17,7 @@ Requirements may be added or modified during progressing.
 
 ## Engineering
 
-- Python first, >=3.12
+- Python first, >=3.14
 - Best practice, modern: layout, documentation comments, test/workflow
 - Type hint: if possible
 - `uv` native: should

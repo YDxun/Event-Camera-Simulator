@@ -117,10 +117,10 @@ radiometric calibration.
 
 | Backend | Runtime (s) | Frames/s | MPixel-frames/s | Events |
 |---|---:|---:|---:|---:|
-| vectorized | 0.148 | 196.52 | 1.3584 | 889,455 |
-| loop | 1.594 | 18.20 | 0.1258 | 889,455 |
+| vectorized | 0.152 | 191.39 | 1.3229 | 889,455 |
+| loop | 1.630 | 17.79 | 0.1230 | 889,455 |
 
-Measured speedup `T_loop / T_vectorized = 10.80x`.
+Measured speedup `T_loop / T_vectorized = 10.76x`.
 
 ## Assumptions and limitations
 

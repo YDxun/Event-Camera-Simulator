@@ -20,8 +20,8 @@
   "frames_processed": 96,
   "width": 320,
   "height": 240,
-  "processing_fps": 223.10577687514237,
-  "pixel_frames_per_second": 17134523.664010935,
+  "processing_fps": 221.41001341410933,
+  "pixel_frames_per_second": 17004289.030203596,
   "input_video": "output/demo/input_960fps.avi",
   "event_video": "output/demo/event_video.avi",
   "config": {

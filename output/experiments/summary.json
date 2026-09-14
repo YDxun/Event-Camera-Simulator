@@ -84,18 +84,18 @@
   },
   "benchmark": {
     "vectorized": {
-      "elapsed_s": 0.1475654249998115,
-      "frames_per_s": 196.5229998831843,
-      "mega_pixel_frames_per_s": 1.35836697519257,
+      "elapsed_s": 0.15152126899920404,
+      "frames_per_s": 191.3922724614479,
+      "mega_pixel_frames_per_s": 1.322903387253528,
       "events": 889455
     },
     "loop": {
-      "elapsed_s": 1.593835958999989,
-      "frames_per_s": 18.195097077741487,
-      "mega_pixel_frames_per_s": 0.12576451100134914,
+      "elapsed_s": 1.6299108499988506,
+      "frames_per_s": 17.792384166299925,
+      "mega_pixel_frames_per_s": 0.12298095935746507,
       "events": 889455
     },
-    "speedup_loop_over_vectorized": 10.8008766891162
+    "speedup_loop_over_vectorized": 10.756977292787937
   },
   "threshold_sweep": [
     {
