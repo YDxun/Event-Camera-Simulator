@@ -115,15 +115,11 @@ def run_demo(
         output / "input_960fps.avi", fps, seconds, width, height
     )
 
-    config = SimulatorConfig()
+    config_path = Path(__file__).resolve().parents[2] / "configs" / "enhanced.json"
+    config = (
+        SimulatorConfig.load(config_path) if config_path.exists() else SimulatorConfig()
+    )
     config.input.fallback_fps = fps
-    config.sensor.positive_threshold = 0.20
-    config.sensor.negative_threshold = 0.15
-    config.sensor.refractory_period_us = 100
-    config.noise.enable_threshold_variation = True
-    config.noise.threshold_sigma = 0.02
-    config.noise.background_rate_hz = 0.02
-    config.visualization.accumulation_time_us = 5_000
     config.visualization.output_video = str(output / "event_video.avi")
     config.output.csv_path = str(output / "events.csv")
     config.output.npz_path = str(output / "events.npz")

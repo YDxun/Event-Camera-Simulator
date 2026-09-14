@@ -21,6 +21,19 @@ def run(
     return np.concatenate(parts)
 
 
+def _backend_test_config(
+    backend: str, interpolation: str = "linear"
+) -> SimulatorConfig:
+    config = SimulatorConfig()
+    config.sensor.timestamp_resolution_us = 10
+    config.sensor.refractory_period_us = 100
+    config.simulation.backend = backend
+    config.simulation.interpolation = interpolation
+    config.noise.enable_threshold_variation = False
+    config.noise.background_rate_hz = 0.0
+    return config
+
+
 def test_vectorized_matches_pixel_loop():
     rng = np.random.default_rng(2026)
     images = [rng.integers(0, 256, (20, 23), dtype=np.uint8) for _ in range(15)]
@@ -50,3 +63,19 @@ def test_vectorized_matches_pixel_loop_with_refractory_and_zero_delta():
 
     assert np.array_equal(vectorized, loop)
     assert vectorized["timestamp_us"][-1] == 2000
+
+
+def test_vectorized_matches_pixel_loop_without_interpolation():
+    rng = np.random.default_rng(2027)
+    images = [rng.integers(0, 256, (6, 8), dtype=np.uint8) for _ in range(6)]
+    vectorized = run(
+        "vectorized",
+        images,
+        config=_backend_test_config("vectorized", interpolation="none"),
+    )
+    loop = run(
+        "loop",
+        images,
+        config=_backend_test_config("loop", interpolation="none"),
+    )
+    assert np.array_equal(vectorized, loop)

@@ -428,6 +428,8 @@ class EventSimulator:
         """Compute a continuous linearly interpolated crossing time within [t0, t1]."""
         assert self.last_log_intensity is not None
         assert self._current_log1 is not None
+        if self.config.simulation.interpolation == "none":
+            return float(t1)
         step = np.float32(self._current_log1[pixel] - self.last_log_intensity[pixel])
         numerator = np.float32(np.float32(level) - self.last_log_intensity[pixel])
         alpha = _interpolation_alpha(float(step), float(numerator))

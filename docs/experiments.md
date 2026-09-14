@@ -16,13 +16,13 @@ Varying $C$ uniformly from $0.10$ to $0.40$ on the synthetic 960 FPS benchmark y
 
 | Threshold $C$ | Total Events $N$ | Event Rate over Input (Hz) | Normalization Metric ($N \cdot C$) |
 |:---:|---:|---:|---:|
-| **0.10** | 256,211 | 1,546,934.3 | 25,621.1 |
-| **0.15** | 156,546 | 945,183.4 | 23,481.9 |
-| **0.20** | 114,563 | 691,701.1 | 22,912.6 |
-| **0.30** | 72,298 | 436,516.2 | 21,689.4 |
-| **0.40** | 51,748 | 312,440.8 | 20,699.2 |
+| **0.10** | 256,196 | 1,546,843.8 | 25,619.6 |
+| **0.15** | 156,535 | 945,117.0 | 23,480.3 |
+| **0.20** | 114,555 | 691,652.8 | 22,911.0 |
+| **0.30** | 72,293 | 436,486.0 | 21,687.9 |
+| **0.40** | 51,744 | 312,416.6 | 20,697.6 |
 
-The total count decreases strictly monotonically as $C$ increases, while $N \cdot C$ remains within the same order of magnitude ($\approx 2.1 \times 10^4$ to $2.5 \times 10^4$), directly corroborating the theoretical scaling model.
+The total count decreases strictly monotonically as $C$ increases, while $N \cdot C$ remains within the same order of magnitude ($\approx 2.1 \times 10^4$ to $2.5 \times 10^4$), consistent with the expected `N ~ 1/C` trend.
 
 Artifacts: `output/experiments/threshold_sweep.csv`, `output/experiments/threshold_sweep.png`.
 
@@ -39,13 +39,13 @@ Events generated at lower frame rates (120, 240, 480, 960, 1920 FPS) were compar
 |---:|---:|---:|---:|---:|---:|
 | **120** | 35 | 0.0789 | 35 | 3 | 2,221.1 $\mu\text{s}$ |
 | **240** | 37 | 0.0263 | 37 | 1 | 1,363.4 $\mu\text{s}$ |
-| **480** | 38 | 0.0000 | 38 | 0 | 790.5 $\mu\text{s}$ |
-| **960** | 38 | 0.0000 | 38 | 0 | 326.5 $\mu\text{s}$ |
+| **480** | 38 | 0.0000 | 38 | 0 | 790.7 $\mu\text{s}$ |
+| **960** | 38 | 0.0000 | 38 | 0 | 326.3 $\mu\text{s}$ |
 | **1920** | 38 | 0.0000 | 38 | 0 | 136.2 $\mu\text{s}$ |
 | **3840** | 38 | 0.0000 | 38 | 0 | 0.0 $\mu\text{s}$ (baseline) |
 
 ### Observation
-- At $\ge 480\text{ FPS}$, the event count converges with $100\%$ zero-defect sequence recovery (0 unmatched events).
+- At $\ge 480\text{ FPS}$, the event counts match the 3840 FPS reference and no events remain unmatched.
 - Timestamp RMSE decreases monotonically toward zero as frame rate doubles, consistent with temporal convergence under piecewise-linear interpolation.
 
 Artifacts: `output/experiments/fps_sweep.csv`, `output/experiments/fps_sweep.png`.
@@ -65,8 +65,8 @@ To isolate the effect of each physical non-ideality, four progressive sensor mod
 |---|---:|---:|---:|---:|---:|
 | **A: Ideal** | 69,767 | 34,221 | 35,546 | 0.9627 | 421,234.7 |
 | **B: + Mismatch** | 71,051 | 34,823 | 36,228 | 0.9612 | 428,987.2 |
-| **C: + Background** | 71,150 | 34,865 | 36,285 | 0.9609 | 429,584.9 |
-| **D: + Refractory** | 66,744 | 32,879 | 33,865 | 0.9709 | 402,982.6 |
+| **C: + Background** | 71,089 | 34,846 | 36,243 | 0.9615 | 429,216.6 |
+| **D: + Refractory** | 66,689 | 32,864 | 33,825 | 0.9716 | 402,650.6 |
 
 ### Physical Interpretation
 - Threshold mismatch (Model B) slightly increases overall event count as pixels with sampled thresholds lower than $C$ fire more easily.
@@ -85,9 +85,9 @@ Event camera visualization requires accumulating discrete events into a 2D image
 | Window ($\Delta T_{\text{acc}}$) | Events in Window | Active Pixels | Visual Characteristics |
 |---:|---:|---:|---|
 | **1,000 $\mu\text{s}$ (1 ms)** | 812 | 157 | Highly temporal, sparse edges, motion direction clearly separated. |
-| **5,000 $\mu\text{s}$ (5 ms)** | 4,804 | 1,343 | Balanced representation; sharp object contours with minimal motion blur. |
+| **5,000 $\mu\text{s}$ (5 ms)** | 4,807 | 1,343 | Balanced representation; sharp object contours with minimal motion blur. |
 | **10,000 $\mu\text{s}$ (10 ms)** | 9,088 | 2,125 | Solid outlines, suitable for slow-moving objects; slight temporal trail. |
-| **20,000 $\mu\text{s}$ (20 ms)** | 17,676 | 3,180 | Dense spatial coverage; visible motion blur trail behind fast-moving disks. |
+| **20,000 $\mu\text{s}$ (20 ms)** | 17,677 | 3,180 | Dense spatial coverage; visible motion blur trail behind fast-moving disks. |
 
 > [!NOTE]
 > The accumulation window affects **visualization only**. The underlying event stream preserves exact microsecond timestamps regardless of the accumulation duration.
@@ -107,9 +107,8 @@ Both backends were validated to produce mathematically identical event streams (
 
 | Backend | Runtime (s) | Processing Throughput (FPS) | Megapixel-Frames / s | Emitted Events |
 |---|---:|---:|---:|---:|
-| **Vectorized** | 0.427 | 67.96 | 0.470 | 889,455 |
-| **Loop (Reference)** | 5.318 | 5.45 | 0.038 | 889,455 |
+| **Vectorized** | 0.385 | 75.38 | 0.521 | 889,455 |
+| **Loop (Reference)** | 6.449 | 4.50 | 0.031 | 889,455 |
 
-Measured speedup: **$12.46\times$** for the vectorized backend over the pixel loop.
-Artifacts: `output/benchmark.json`.
+Measured speedup: **$16.76\times$** for the vectorized backend over the pixel loop on this machine and configuration. These values come from `run_experiments.py`; `output/benchmark.json` is a separate random-frame benchmark and is not directly comparable.
 
