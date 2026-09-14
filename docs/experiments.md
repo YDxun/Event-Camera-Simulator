@@ -107,8 +107,8 @@ Both backends were validated to produce mathematically identical event streams (
 
 | Backend | Runtime (s) | Processing Throughput (FPS) | Megapixel-Frames / s | Emitted Events |
 |---|---:|---:|---:|---:|
-| **Vectorized** | 0.385 | 75.38 | 0.521 | 889,455 |
-| **Loop (Reference)** | 6.449 | 4.50 | 0.031 | 889,455 |
+| **Vectorized** | 0.345 | 84.09 | 0.581 | 889,455 |
+| **Loop (Reference)** | 5.827 | 4.98 | 0.034 | 889,455 |
 
-Measured speedup: **$16.76\times$** for the vectorized backend over the pixel loop on this machine and configuration. These values come from `run_experiments.py`; `output/benchmark.json` is a separate random-frame benchmark and is not directly comparable.
+Measured speedup: **$16.90\times$** for the vectorized backend over the pixel loop on this machine and configuration. These values come from `run_experiments.py`; `output/benchmark.json` is a separate random-frame benchmark and is not directly comparable.
 

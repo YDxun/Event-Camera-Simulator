@@ -151,8 +151,7 @@ Implemented extensions include:
 
 ## 6. Validation
 
-The validation suite contains 19 passing tests and a separate analytical
-verification command. The analytical test generates 48 expected threshold
+The current validation suite contains 31 tests and 12 explicit model-consistency checks. The analytical test generates 48 expected threshold
 crossings from a single-pixel ramp. The simulator generates 48 events with:
 
 ```text
@@ -163,21 +162,24 @@ timestamp resolution = 1 us
 
 This is a model-consistency validation, not a comparison against a physical
 event-camera sensor. It verifies that preprocessing, state updates,
-interpolation, crossing count and floor quantization are internally consistent.
+interpolation, crossing count and pure floor timestamp quantization are
+internally consistent.
 
 The asymmetric-threshold check uses `C+ = 0.15` and `C- = 0.30` and produces
 46 ON events versus 23 OFF events for the same magnitude range, matching the
 expected threshold ratio.
 
 The vectorized and pixel-loop backends produce exactly 12,630 identical events
-in the deterministic validation sequence.
+in the deterministic validation sequence. Additional regression checks cover
+pure floor quantization at a clock boundary and a zero-delta residual crossing
+combined with refractory filtering; those checks also pass event-for-event.
 
 ## 7. Experiments
 
 ### Threshold sensitivity
 
-For `C = 0.10, 0.15, 0.20, 0.30, 0.40`, event count decreases from 256,211 to
-51,748. The product `N * C` remains within the same order of magnitude,
+For `C = 0.10, 0.15, 0.20, 0.30, 0.40`, event count decreases from 256,196 to
+51,744. The product `N * C` remains within the same order of magnitude,
 supporting the expected `N ~ 1/C` trend.
 
 ### FPS convergence
@@ -215,8 +217,8 @@ only and does not alter raw events.
 
 ### Photometric preprocessing
 
-Direct log encoding produces 114,527 events, while the optional gamma-linearized
-model produces 304,904. This large difference shows that event generation is
+Direct log encoding produces 114,519 events, while the optional gamma-linearized
+model produces 304,886. This large difference shows that event generation is
 sensitive to the assumed photometric response. It does not prove that either
 curve is the physically correct response of the source camera.
 

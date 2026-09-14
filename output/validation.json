@@ -28,8 +28,8 @@
       "details": {
         "expected_events": 48,
         "actual_events": 48,
-        "timestamp_mae_us": 0.5,
-        "timestamp_max_error_us": 1
+        "timestamp_mae_us": 0.0,
+        "timestamp_max_error_us": 0
       }
     },
     {
@@ -46,6 +46,23 @@
       "details": {
         "events": 34,
         "duplicate_timestamp_bins": 24
+      }
+    },
+    {
+      "name": "pure_floor_timestamp_quantization",
+      "passed": true,
+      "details": {
+        "events": 60,
+        "first_timestamp_us": 0
+      }
+    },
+    {
+      "name": "zero_delta_backend_consistency",
+      "passed": true,
+      "details": {
+        "vectorized_events": 11,
+        "loop_events": 11,
+        "last_timestamp_us": 2000
       }
     },
     {

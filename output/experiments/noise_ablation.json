@@ -17,18 +17,18 @@
   },
   {
     "variant": "C_threshold_plus_background",
-    "event_count": 71150,
-    "on_events": 34865,
-    "off_events": 36285,
-    "on_off_ratio": 0.960865371365578,
-    "event_rate_over_input_hz": 429584.90566037735
+    "event_count": 71089,
+    "on_events": 34846,
+    "off_events": 36243,
+    "on_off_ratio": 0.9614546257208288,
+    "event_rate_over_input_hz": 429216.60377358494
   },
   {
     "variant": "D_plus_refractory",
-    "event_count": 66744,
-    "on_events": 32879,
-    "off_events": 33865,
-    "on_off_ratio": 0.9708843939170235,
-    "event_rate_over_input_hz": 402982.641509434
+    "event_count": 66689,
+    "on_events": 32864,
+    "off_events": 33825,
+    "on_off_ratio": 0.9715890613451589,
+    "event_rate_over_input_hz": 402650.56603773584
   }
 ]

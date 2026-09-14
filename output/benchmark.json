@@ -1,15 +1,15 @@
 {
   "vectorized": {
-    "elapsed_s": 0.4609647000033874,
-    "frames_per_s": 62.91154181608026,
-    "mega_pixel_frames_per_s": 0.43484457703274676,
-    "events": 889455
+    "elapsed_s": 13.133988499990664,
+    "frames_per_s": 4.492161691784787,
+    "mega_pixel_frames_per_s": 0.34499801792907164,
+    "events": 20010012
   },
   "loop": {
-    "elapsed_s": 8.764227099978598,
-    "frames_per_s": 3.308905585076728,
-    "mega_pixel_frames_per_s": 0.022871155404050346,
-    "events": 889455
+    "elapsed_s": 137.97184990000096,
+    "frames_per_s": 0.42762346118256683,
+    "mega_pixel_frames_per_s": 0.032841481818821135,
+    "events": 20010012
   },
-  "speedup_loop_over_vectorized": 19.01279447192853
+  "speedup_loop_over_vectorized": 10.50494675704178
 }

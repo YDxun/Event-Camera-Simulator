@@ -21,7 +21,7 @@ Outcome: the project was rebuilt around `evsim`, NumPy, OpenCV and pytest. Old C
 
 > Review the current GitHub main branch and strengthen analytical timestamp validation, asymmetric thresholds, event-rate statistics, timestamp quantization/refractory conventions and dark/saturation edge cases.
 
-Outcome: validation was expanded to 10 explicit model checks. The analytical result is 48 expected events versus 48 generated events, with MAE `0.5 us` and maximum error `1 us`.
+Outcome: validation was expanded to 12 explicit model checks. The analytical result is 48 expected events versus 48 generated events, with MAE `0.5 us` and maximum error `1 us`.
 
 ### Prompt 3: Lightweight UI
 

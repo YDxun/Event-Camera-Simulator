@@ -6,7 +6,7 @@
   },
   {
     "accumulation_time_us": 5000,
-    "event_count": 4804,
+    "event_count": 4807,
     "active_pixels": 1343
   },
   {
@@ -16,7 +16,7 @@
   },
   {
     "accumulation_time_us": 20000,
-    "event_count": 17676,
+    "event_count": 17677,
     "active_pixels": 3180
   }
 ]
