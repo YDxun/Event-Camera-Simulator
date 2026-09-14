@@ -1,5 +1,7 @@
 """Self-contained synthetic high-FPS demo and video generation."""
 
+from __future__ import annotations
+
 from pathlib import Path
 
 import cv2 as cv

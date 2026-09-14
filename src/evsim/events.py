@@ -1,5 +1,7 @@
 """Event representation, memory layout, and event-stream IO."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Self

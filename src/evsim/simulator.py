@@ -33,6 +33,8 @@ Mathematical Formulation:
    - For accepted events, the reference level updates: L_ref <- L_k.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 
 import numpy as np

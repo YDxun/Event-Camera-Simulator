@@ -1,7 +1,10 @@
 """Lightweight Streamlit UI for the Python event-camera simulator."""
 
+from __future__ import annotations
+
 import shutil
 import subprocess
+import sys
 import tempfile
 import traceback
 import zipfile
@@ -12,13 +15,17 @@ import numpy as np
 import streamlit as st
 from imageio_ffmpeg import get_ffmpeg_exe
 
+ROOT = Path(__file__).resolve().parent
+# Streamlit Cloud runs the checkout directly using its existing Python runtime.
+# Import from src so the web entrypoint does not install the Python >=3.14 package.
+if str(ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(ROOT / "src"))
+
 from evsim.config import SimulatorConfig
 from evsim.demo import write_synthetic_video
 from evsim.pipeline import SimulationResult, simulate_source
 from evsim.sources import open_source
 from evsim.visualization import EventVideoRenderer
-
-ROOT = Path(__file__).resolve().parent
 
 
 def _safe_extract_zip(path: Path, destination: Path) -> Path:

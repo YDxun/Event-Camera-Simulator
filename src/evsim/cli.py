@@ -1,5 +1,7 @@
 """Command-line interface for the Python event-camera simulator using Tyro."""
 
+from __future__ import annotations
+
 import json
 import sys
 from dataclasses import dataclass

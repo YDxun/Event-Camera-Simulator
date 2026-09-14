@@ -1,5 +1,7 @@
 """Efficient desktop GUI for the Python event-camera simulator using PySide6."""
 
+from __future__ import annotations
+
 import json
 import sys
 import tempfile

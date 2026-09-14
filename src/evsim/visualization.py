@@ -15,6 +15,8 @@ event cameras produce sparse, asynchronous event streams. To visualize events:
    (x, y, t, p) event stream maintains exact microsecond timestamps.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Self
 
