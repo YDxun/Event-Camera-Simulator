@@ -1,7 +1,0 @@
-numpy>=2.5.3
-opencv-python>=5.0.0.93; platform_system != "Linux"
-opencv-python-headless>=5.0.0.93; platform_system == "Linux"
-tqdm>=4.70.1
-tyro>=1.0.16
-streamlit>=1.63.0
-imageio-ffmpeg>=0.6.0
