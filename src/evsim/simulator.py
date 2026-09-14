@@ -23,7 +23,9 @@ Mathematical Formulation:
 4. Piecewise-Linear Interpolation:
    Under the linear intensity assumption between t0 and t1:
    alpha_k = (L_k - L(t0)) / (L(t1) - L(t0))
-   t_k = round(t0 + alpha_k * (t1 - t0))
+   t_k^* = t0 + alpha_k * (t1 - t0)
+   If the frame interval has no intensity change, the residual crossing is
+   assigned to t1 as a deterministic model convention.
 
 5. Quantization & Refractory Filter:
    - Timestamps are floor-quantized to sensor resolution:
@@ -42,6 +44,40 @@ import numpy as np
 from .config import SimulatorConfig
 from .events import EVENT_DTYPE, empty_events, sort_events
 from .preprocessing import to_log_intensity
+
+
+def _interpolation_alpha(step: float, numerator: float) -> float:
+    """Return the fractional crossing position inside one frame interval.
+
+    A zero-length interval has no temporal information. We use the explicit
+    convention that a residual crossing is assigned to the end of the interval.
+    """
+    if abs(float(step)) <= 1e-12:
+        return 1.0
+    return min(1.0, max(0.0, float(numerator) / float(step)))
+
+
+def _interpolation_alphas(step: np.ndarray, numerator: np.ndarray) -> np.ndarray:
+    """Vectorized equivalent of :func:`_interpolation_alpha`."""
+    alpha = np.ones(step.shape, dtype=np.float64)
+    nonzero = np.abs(step.astype(np.float64)) > 1e-12
+    alpha[nonzero] = numerator[nonzero].astype(np.float64) / step[nonzero].astype(
+        np.float64
+    )
+    return np.clip(alpha, 0.0, 1.0)
+
+
+def _quantize_timestamp(value: float, resolution: int) -> int:
+    """Apply pure floor quantization to one continuous timestamp."""
+    return int(np.floor(float(value) / int(resolution)) * int(resolution))
+
+
+def _quantize_timestamps(values: np.ndarray, resolution: int) -> np.ndarray:
+    """Apply pure floor quantization to continuous timestamps in microseconds."""
+    resolution = int(resolution)
+    return (
+        np.floor(values.astype(np.float64) / resolution).astype(np.int64) * resolution
+    )
 
 
 def _crossing_counts(delta: np.ndarray, threshold: np.ndarray) -> np.ndarray:
@@ -179,18 +215,14 @@ class EventSimulator:
             )
             levels = ref[pixels] + steps
             denominator = log1[pixels] - log0[pixels]
-            alpha = np.zeros(total_contrast, dtype=np.float64)
-            nonzero = np.abs(denominator) > 1e-12
-            alpha[nonzero] = (levels[nonzero] - log0[pixels][nonzero]) / denominator[
-                nonzero
-            ]
-            np.clip(alpha, 0.0, 1.0, out=alpha)
+            numerator = levels - log0[pixels]
+            alpha = _interpolation_alphas(denominator, numerator)
             if self.config.simulation.interpolation == "linear":
-                times = np.rint(t0 + alpha * float(t1 - t0)).astype(np.int64)
+                raw_times = t0 + alpha * float(t1 - t0)
             else:
-                times = np.full(total_contrast, t1, dtype=np.int64)
+                raw_times = np.full(total_contrast, float(t1), dtype=np.float64)
             pixel_parts.append(pixels)
-            time_parts.append(times)
+            time_parts.append(raw_times)
             polarity_parts.append(np.where(is_positive, np.int8(1), np.int8(-1)))
             level_parts.append(levels.astype(np.float32))
             kind_parts.append(np.zeros(total_contrast, dtype=np.int8))
@@ -230,15 +262,23 @@ class EventSimulator:
             )
 
         pixels = np.concatenate(pixel_parts)
-        times = np.concatenate(time_parts)
+        raw_times = np.concatenate(time_parts).astype(np.float64)
         polarity = np.concatenate(polarity_parts)
         levels = np.concatenate(level_parts)
         kind = np.concatenate(kind_parts)
 
-        resolution = self.config.sensor.timestamp_resolution_us
-        times = np.floor_divide(times, resolution) * resolution
-        order = np.lexsort((polarity, kind, times, pixels))
-        return pixels[order], times[order], polarity[order], levels[order], kind[order]
+        # Sort by continuous crossing time so quantization cannot reorder events
+        # before refractory filtering. Then apply the one shared floor quantizer.
+        order = np.lexsort((polarity, kind, raw_times, pixels))
+        pixels = pixels[order]
+        raw_times = raw_times[order]
+        polarity = polarity[order]
+        levels = levels[order]
+        kind = kind[order]
+        times = _quantize_timestamps(
+            raw_times, self.config.sensor.timestamp_resolution_us
+        )
+        return pixels, times, polarity, levels, kind
 
     def _apply_refractory(
         self,
@@ -328,7 +368,7 @@ class EventSimulator:
         accepted_background = 0
 
         for pixel in range(log1.size):
-            candidates: list[tuple[int, int, int, float]] = []
+            candidates: list[tuple[float, int, int, float]] = []
             ref_value = np.float32(self.ref_log_intensity[pixel])
             delta = np.float32(np.float32(log1[pixel]) - ref_value)
             if delta >= self.pos_thresholds[pixel]:
@@ -363,7 +403,7 @@ class EventSimulator:
 
             candidates.sort(key=lambda item: (item[0], item[1], item[2]))
             for raw_time, candidate_kind, polarity, level in candidates:
-                time = (raw_time // resolution) * resolution
+                time = _quantize_timestamp(raw_time, resolution)
                 if time - self.last_event_time_us[pixel] < refractory:
                     continue
                 self.last_event_time_us[pixel] = time
@@ -384,18 +424,14 @@ class EventSimulator:
         events["polarity"] = raw[:, 2]
         return PairEvents(sort_events(events), accepted_contrast, accepted_background)
 
-    def _interpolate_time(self, pixel: int, level: float, t0: int, t1: int) -> int:
-        """Compute linearly interpolated crossing time within [t0, t1]."""
+    def _interpolate_time(self, pixel: int, level: float, t0: int, t1: int) -> float:
+        """Compute a continuous linearly interpolated crossing time within [t0, t1]."""
         assert self.last_log_intensity is not None
         assert self._current_log1 is not None
         step = np.float32(self._current_log1[pixel] - self.last_log_intensity[pixel])
-        if self.config.simulation.interpolation == "none" or abs(float(step)) <= 1e-12:
-            alpha = 1.0
-        else:
-            numerator = np.float32(np.float32(level) - self.last_log_intensity[pixel])
-            alpha = float(numerator / step)
-            alpha = min(1.0, max(0.0, alpha))
-        return round(t0 + alpha * float(t1 - t0))
+        numerator = np.float32(np.float32(level) - self.last_log_intensity[pixel])
+        alpha = _interpolation_alpha(float(step), float(numerator))
+        return float(t0 + alpha * float(t1 - t0))
 
     def process(self, image: np.ndarray, timestamp_us: int) -> PairEvents:
         """Process the next video frame and return generated events.

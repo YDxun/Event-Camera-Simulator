@@ -65,7 +65,7 @@ def test_ui_config_builds_expected_non_ideal_parameters():
     assert config.sensor.timestamp_resolution_us == 10
     assert config.sensor.refractory_period_us == 250
     assert config.noise.enable_threshold_variation
-    assert config.noise.background_rate_hz == 0.05
+    assert config.noise.background_rate_hz == 0.02
     assert config.runtime.max_frames == 12
     assert config.input.fallback_fps == 480.0
 

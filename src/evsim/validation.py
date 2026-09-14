@@ -158,6 +158,73 @@ def run_core_validation(seed: int = 7) -> dict[str, Any]:
         )
     )
 
+    floor_cfg = _ideal_config(
+        **{
+            "sensor.positive_threshold": 0.08,
+            "sensor.negative_threshold": 0.08,
+            "sensor.timestamp_resolution_us": 100,
+        }
+    )
+    floor_frames = [
+        black,
+        np.full((1, 1), 31, dtype=np.uint8),
+    ]
+    floor_events = _stream(floor_cfg, floor_frames)
+    floor_expected = _expected_positive_times(floor_cfg, 0, 31, 1000)
+    floor_pass = bool(
+        len(floor_events) == len(floor_expected)
+        and np.array_equal(floor_events["timestamp_us"], floor_expected)
+    )
+    checks.append(
+        Check(
+            "pure_floor_timestamp_quantization",
+            floor_pass,
+            {
+                "events": len(floor_events),
+                "first_timestamp_us": int(floor_events["timestamp_us"][0])
+                if len(floor_events)
+                else None,
+            },
+        )
+    )
+
+    zero_delta_frames = [
+        np.full((1, 1), value, dtype=np.uint8) for value in (19, 67, 67)
+    ]
+    zero_delta_vec_cfg = _ideal_config(
+        **{
+            "sensor.positive_threshold": 0.05,
+            "sensor.negative_threshold": 0.08,
+            "sensor.timestamp_resolution_us": 100,
+            "sensor.refractory_period_us": 100,
+        }
+    )
+    zero_delta_loop_cfg = _ideal_config(
+        **{
+            "sensor.positive_threshold": 0.05,
+            "sensor.negative_threshold": 0.08,
+            "sensor.timestamp_resolution_us": 100,
+            "sensor.refractory_period_us": 100,
+            "simulation.backend": "loop",
+        }
+    )
+    zero_delta_vec = _stream(zero_delta_vec_cfg, zero_delta_frames)
+    zero_delta_loop = _stream(zero_delta_loop_cfg, zero_delta_frames)
+    zero_delta_pass = bool(np.array_equal(zero_delta_vec, zero_delta_loop))
+    checks.append(
+        Check(
+            "zero_delta_backend_consistency",
+            zero_delta_pass,
+            {
+                "vectorized_events": len(zero_delta_vec),
+                "loop_events": len(zero_delta_loop),
+                "last_timestamp_us": int(zero_delta_vec["timestamp_us"][-1])
+                if len(zero_delta_vec)
+                else None,
+            },
+        )
+    )
+
     rf_cfg = _ideal_config(**{"sensor.refractory_period_us": 100})
     events = _stream(rf_cfg, [black, white])
     gaps = np.diff(events["timestamp_us"]) if len(events) > 1 else np.array([100])

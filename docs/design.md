@@ -6,7 +6,7 @@ This document details the software architecture, physical sensor abstractions, a
 
 ## 1. System Objective & Scope
 
-The objective of `evsim` is to accurately simulate the physical response of a neuromorphic event camera (such as DVS, ATIS, or DAVIS) given a sequence of high-frame-rate intensity frames.
+The objective of `evsim` is to phenomenologically simulate the response of a neuromorphic event camera (such as DVS, ATIS, or DAVIS) given a sequence of high-frame-rate intensity frames.
 
 ```text
 High-FPS Video / Image Sequence + Sensor Parameters
@@ -57,7 +57,7 @@ The codebase adheres to clean separation of concerns, decoupling the computation
    - Supports OpenCV video streams and naturally sorted image sequences with microsecond timestamp files (`ts_frame.txt`).
    - Compact memory layout: structured NumPy array `EVENT_DTYPE` and streaming serialization (NPZ, CSV).
 3. **Visualization & Rendering (`src/evsim/visualization.py`)**:
-   - Temporal sliding-window accumulation ($\Delta T_{\text{acc}}$).
+   - Frame-aligned accumulation window ($\Delta T_{\text{acc}}$).
    - Robust fallback video encoding pipeline (`mp4v` $\to$ `avc1` $\to$ `MJPG`).
 4. **Three Decoupled Interfaces**:
    - **CLI (`src/evsim/cli.py`)**: Structured, type-safe command-line interface powered by Tyro.
@@ -110,10 +110,12 @@ The continuous crossing timestamp $t_k^*$ is calculated by solving for $\alpha_k
 $$\alpha_k = \frac{L_k - L(t_0)}{L(t_1) - L(t_0)}$$
 $$t_k^* = t_0 + \alpha_k \cdot (t_1 - t_0)$$
 
+If $L(t_1) \approx L(t_0)$ while a residual crossing remains, the simulator uses the explicit convention $\alpha_k = 1$ and assigns the residual event to $t_1$.
+
 ### 3.6 Timestamp Floor Quantization
 Analog event camera readout systems operate with finite clock resolution $\Delta t_{\text{res}}$ (default: $1\ \mu\text{s}$):
 $$t_k = \left\lfloor \frac{t_k^*}{\Delta t_{\text{res}}} \right\rfloor \cdot \Delta t_{\text{res}}$$
-Floor quantization is used rather than nearest rounding to strictly preserve physical causality. Multiple events within the same microsecond bin share the same quantized timestamp.
+The continuous crossing time is floor-quantized once to the sensor clock grid. Multiple events within the same clock bin share the same quantized timestamp.
 
 ### 3.7 Refractory Period Suppression
 Physical photoreceptors require a finite circuit reset and refractory dead-time $\Delta t_{\text{refr}}$ after generating an event:
@@ -124,7 +126,7 @@ $$t_{\text{last}}(x, y) \leftarrow t_k$$
 $$L_{\text{ref}}(x, y) \leftarrow L_k$$
 
 > [!NOTE]
-> The reference level $L_{\text{ref}}$ updates to the crossed threshold level $L_k$, **not** to the end-of-frame intensity $L(t_1)$. Any remaining residual difference $(L(t_1) - L_k)$ is preserved across subsequent frame intervals.
+> The reference level $L_{\text{ref}}$ updates to the crossed threshold level $L_k$, **not** to the end-of-frame intensity $L(t_1)$. Any remaining residual difference $(L(t_1) - L_k)$ is preserved across subsequent frame intervals. In the simplified model, refractory-suppressed contrast events do not update $L_{\text{ref}}$; this state convention is deliberate and not a transistor-level model.
 
 ---
 
@@ -156,7 +158,7 @@ Background events are assigned uniformly distributed timestamps in $[t_0, t_1]$ 
 
 ## 6. Visualization & Color Encoding Conventions
 
-Event streams are accumulated over a sliding window $\Delta T_{\text{acc}}$ (default: $10,000\ \mu\text{s} = 10\text{ ms}$) to generate illustrative video frames in OpenCV BGR format:
+Event streams are accumulated over a frame-aligned window $\Delta T_{\text{acc}}$ (default: $10,000\ \mu\text{s} = 10\text{ ms}$) to generate illustrative video frames in OpenCV BGR format:
 
 | Event State | BGR Value | Displayed Color |
 |---|---|---|

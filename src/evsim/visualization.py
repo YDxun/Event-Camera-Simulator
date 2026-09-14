@@ -4,7 +4,7 @@ Visualization Model:
 --------------------
 Unlike traditional cameras where frames represent integrated radiance over exposure,
 event cameras produce sparse, asynchronous event streams. To visualize events:
-1. Events are accumulated over a sliding temporal window of duration Delta T_acc
+1. Events are accumulated over a frame-aligned temporal window of duration Delta T_acc
    (default: 10,000 us = 10 ms).
 2. Color encoding conventions in BGR (OpenCV format):
    - Background (no events): Dark Gray (25, 25, 25)
@@ -106,7 +106,8 @@ class EventVideoRenderer:
         image[mask] = blended[mask]
         return image
 
-    def render_binary_frame(self) -> np.ndarray:
+    def render_polarity_frame(self) -> np.ndarray:
+        """Render a polarity-coded event frame (ON red, OFF blue)."""
         return self.render_event_frame()
 
     def render_count_frame(self) -> np.ndarray:
@@ -118,11 +119,11 @@ class EventVideoRenderer:
             original = cv.cvtColor(frame, cv.COLOR_GRAY2BGR)
         else:
             original = frame.copy()
-        binary = self.render_binary_frame()
+        polarity = self.render_polarity_frame()
         count = cv.cvtColor(self.render_count_frame(), cv.COLOR_GRAY2BGR)
         overlay = self.render_overlay(frame)
-        panel = np.hstack((original, binary, count, overlay))
-        labels = ("Input", "Binary events", "Event count", "Overlay")
+        panel = np.hstack((original, polarity, count, overlay))
+        labels = ("Input", "Polarity events", "Event density", "Overlay")
         for index, label in enumerate(labels):
             cv.putText(
                 panel,

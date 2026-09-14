@@ -80,9 +80,9 @@ Deterministic, noiseless configuration ideal for baseline benchmarking, unit tes
 - Linear sub-frame temporal interpolation
 - Vectorized execution
 
-### `configs/realistic.json`
-High-fidelity model capturing physical neuromorphic sensor non-idealities:
-- Asymmetric contrast thresholds: $C^+ = 0.20$, $C^- = 0.15$
+### `configs/enhanced.json`
+Simplified enhanced model with phenomenological sensor non-idealities:
+- Asymmetric contrast thresholds: $C^+ = 0.20$, $C^- = 0.18$
 - Static Gaussian threshold mismatch ($\sigma = 0.02$)
 - Poisson background activity ($0.02\text{ Hz/pixel}$)
 - Pixel refractory period ($100\ \mu\text{s}$)

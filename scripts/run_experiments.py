@@ -1,6 +1,7 @@
 """Reproducible CA experiments: threshold, FPS interpolation and noise ablation."""
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -20,6 +21,8 @@ from evsim.demo import demo_frame
 from evsim.events import EventStream
 from evsim.simulator import EventSimulator
 from evsim.visualization import EventVideoRenderer
+
+_GIT_ERRORS = (OSError, subprocess.CalledProcessError)
 
 
 def simulate_frames(config: SimulatorConfig, images: list[np.ndarray]) -> EventStream:
@@ -173,8 +176,8 @@ def noise_ablation(output_dir: Path) -> list[dict[str, float]]:
     variants = [
         ("A_ideal", False, 0.0, 0),
         ("B_threshold_mismatch", True, 0.0, 0),
-        ("C_threshold_plus_background", True, 0.05, 0),
-        ("D_plus_refractory", True, 0.05, 100),
+        ("C_threshold_plus_background", True, 0.02, 0),
+        ("D_plus_refractory", True, 0.02, 100),
     ]
     rows: list[dict[str, float]] = []
     for name, vary, background, refractory in variants:
@@ -396,6 +399,17 @@ def write_markdown_report(output_dir: Path, summary: dict) -> Path:
     validation = summary["validation"]
     lines: list[str] = []
     lines.append("# Event Camera Simulator - Final Validation Report")
+    lines.append("")
+    try:
+        revision = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+    except _GIT_ERRORS:
+        revision = "unknown"
+    lines.append(f"Source revision: `{revision}`")
     lines.append("")
     lines.append("## Scope")
     lines.append("")

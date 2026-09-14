@@ -53,14 +53,14 @@ uv run evsim demo --output-dir output/demo --fps 960 --seconds 1.0
 ```bash
 uv run evsim simulate \
   --input path/to/high_fps_video.mp4 \
-  --config configs/realistic.json \
+  --config configs/enhanced.json \
   --output-csv output/events.csv \
   --output-npz output/events.npz \
   --video output/events.avi
 ```
 
 ### 3. Run Core Analytical Validation
-Verifies consistency across 9 formal physical properties (static scene suppression, ramp firing, microsecond alignment, refractory suppression, and backend equivalence):
+Verifies consistency across 12 formal model-consistency checks (static scene suppression, ramp firing, microsecond alignment, refractory suppression, and backend equivalence):
 ```bash
 uv run evsim validate --output-json output/validation.json
 ```
@@ -127,7 +127,7 @@ Input Video / Frames (OpenCV / ImageSequence)
 | Document | Description |
 |---|---|
 | [**Architecture & Design**](docs/design.md) | In-depth mathematical formulation, assumptions A1–A7, decoupled pipeline, and coordinate conventions. |
-| [**Configuration Reference**](docs/configuration.md) | Complete reference of parameters, units, physical ranges, and default presets (`ideal`, `realistic`). |
+| [**Configuration Reference**](docs/configuration.md) | Complete reference of parameters, units, physical ranges, and default presets (`ideal`, `enhanced`). |
 | [**Experimental Verification**](docs/experiments.md) | Quantitative validation: threshold sweep ($N \propto 1/C$), FPS convergence, noise ablation, and benchmarks. |
 | [**Related Work**](docs/RELATED_WORK.md) | Academic positioning and comparative analysis with ESIM, v2e, and the RPG Event-Camera Simulator. |
 | [**Submission Checklist**](output/submission/SUBMISSION_CHECKLIST.md) | Coursework deliverables checklist and technical verification commands. |

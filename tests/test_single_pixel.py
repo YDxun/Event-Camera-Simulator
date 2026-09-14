@@ -119,3 +119,29 @@ def test_dark_saturation_and_duplicate_quantization_bins():
     assert np.all(events["timestamp_us"] % 100 == 0)
     assert np.any(gaps == 0)
     assert np.all(gaps >= 0)
+
+
+def test_pure_floor_quantization_boundary():
+    """A crossing below a resolution boundary must floor down, not round up."""
+    config = SimulatorConfig()
+    config.sensor.positive_threshold = 0.08
+    config.sensor.negative_threshold = 0.08
+    config.sensor.timestamp_resolution_us = 100
+
+    dark = np.zeros((1, 1), dtype=np.uint8)
+    bright = np.full((1, 1), 31, dtype=np.uint8)
+    events = simulated(config, [dark, bright])
+
+    log0 = float(to_log_intensity(dark, config.input, config.sensor)[0, 0])
+    log1 = float(to_log_intensity(bright, config.input, config.sensor)[0, 0])
+    count = int(np.floor((log1 - log0) / config.sensor.positive_threshold + 1e-12))
+    levels = log0 + np.arange(1, count + 1) * config.sensor.positive_threshold
+    continuous_us = (levels - log0) / (log1 - log0) * 1000.0
+    expected_us = (
+        np.floor(continuous_us / config.sensor.timestamp_resolution_us).astype(np.int64)
+        * config.sensor.timestamp_resolution_us
+    )
+
+    assert np.array_equal(events["timestamp_us"], expected_us)
+    assert np.any(continuous_us < 100.0)
+    assert events["timestamp_us"][0] == 0

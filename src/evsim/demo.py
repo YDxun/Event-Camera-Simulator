@@ -152,7 +152,11 @@ def run_demo(
     total = max(int(fps * seconds), 1)
     final_frame = demo_frame(width, height, total - 1, total)
     preview = EventVideoRenderer(width, height, config.visualization)
-    preview.add(result.events, final_frame, total * 1_000_000)
+    if result.events.size:
+        t_end = int(result.events["timestamp_us"][-1])
+        t_start = max(0, t_end - config.visualization.accumulation_time_us)
+        recent_events = result.events[result.events["timestamp_us"] >= t_start]
+        preview.add(recent_events, final_frame, t_end)
     cv.imwrite(
         str(output / "event_preview.png"), preview.render_combined_panel(final_frame)
     )

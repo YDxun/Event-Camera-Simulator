@@ -1,6 +1,6 @@
 # Experiments & Quantitative Verification
 
-This document summarizes the quantitative validation experiments designed to verify the physical correctness, mathematical consistency, and computational performance of `evsim`. All experiments are automated and reproducible via `python scripts/run_experiments.py`.
+This document summarizes the quantitative validation experiments designed to verify the model consistency, implementation correctness, and computational performance of `evsim`. All experiments are automated and reproducible via `python scripts/run_experiments.py`.
 
 ---
 
@@ -31,7 +31,7 @@ Artifacts: `output/experiments/threshold_sweep.csv`, `output/experiments/thresho
 ## 2. Input Frame Rate Convergence (FPS Sweep)
 
 ### Motivation & Methodology
-Because real event cameras operate with continuous-time analog circuits, a discrete-frame simulator approximates continuous irradiance changes using piecewise-linear interpolation between frames. As the input frame rate increases, the discrete temporal error must asymptotically converge toward continuous-time ground truth.
+Because real event cameras operate with continuous-time analog circuits, a discrete-frame simulator approximates continuous irradiance changes using piecewise-linear interpolation between frames. As the input frame rate increases, the discrete temporal representation becomes a progressively denser approximation of the underlying trajectory.
 
 Events generated at lower frame rates (120, 240, 480, 960, 1920 FPS) were compared against a high-rate baseline (3840 FPS) using an order-preserving dynamic programming sequence alignment with an insertion/deletion penalty:
 
@@ -46,7 +46,7 @@ Events generated at lower frame rates (120, 240, 480, 960, 1920 FPS) were compar
 
 ### Observation
 - At $\ge 480\text{ FPS}$, the event count converges with $100\%$ zero-defect sequence recovery (0 unmatched events).
-- Timestamp RMSE decreases monotonically toward zero as frame rate doubles, validating temporal convergence under piecewise-linear interpolation.
+- Timestamp RMSE decreases monotonically toward zero as frame rate doubles, consistent with temporal convergence under piecewise-linear interpolation.
 
 Artifacts: `output/experiments/fps_sweep.csv`, `output/experiments/fps_sweep.png`.
 

@@ -22,9 +22,9 @@ def qapp():
 def test_gui_window_initialization(qapp):
     window = MainWindow()
     assert window.windowTitle() == "Event Camera Simulator (evsim)"
-    assert window.combo_preset.currentText() == "Realistic"
+    assert window.combo_preset.currentText() == "Enhanced"
     assert window.spin_pos_th.value() == 0.20
-    assert window.spin_neg_th.value() == 0.15
+    assert window.spin_neg_th.value() == 0.18
 
 
 def test_gui_preset_switching(qapp):
@@ -35,9 +35,9 @@ def test_gui_preset_switching(qapp):
     assert window.spin_refractory.value() == 0
     assert not window.chk_threshold_var.isChecked()
 
-    window.combo_preset.setCurrentText("Realistic")
+    window.combo_preset.setCurrentText("Enhanced")
     assert window.spin_pos_th.value() == 0.20
-    assert window.spin_neg_th.value() == 0.15
+    assert window.spin_neg_th.value() == 0.18
     assert window.spin_refractory.value() == 100
     assert window.chk_threshold_var.isChecked()
 
@@ -103,3 +103,10 @@ def test_gui_preview_rendering_without_video(qapp):
     assert not window.lbl_preview_image.text().startswith("Preview rendering error")
     assert window.lbl_preview_image.pixmap() is not None
     assert not window.lbl_preview_image.pixmap().isNull()
+
+
+def test_gui_linearization_checkbox_updates_input_config(qapp):
+    window = MainWindow()
+    window.chk_linearization.setChecked(True)
+    cfg = window._build_config()
+    assert cfg.input.linearize is True

@@ -88,6 +88,11 @@ def _transcode_for_browser(source: Path, destination: Path) -> Path:
     return destination
 
 
+def _preset_path(preset: str) -> Path:
+    filename = "ideal.json" if preset == "Ideal" else "enhanced.json"
+    return ROOT / "configs" / filename
+
+
 def _build_config(
     preset: str,
     positive_threshold: float,
@@ -101,17 +106,23 @@ def _build_config(
     max_frames: int,
     fallback_fps: float | None = None,
 ) -> SimulatorConfig:
-    preset_path = (
-        ROOT / "configs" / ("ideal.json" if preset == "Ideal" else "realistic.json")
-    )
-    config = SimulatorConfig.load(preset_path)
+    config = SimulatorConfig.load(_preset_path(preset))
+    enhanced = SimulatorConfig.load(_preset_path("Enhanced"))
     config.sensor.positive_threshold = positive_threshold
     config.sensor.negative_threshold = negative_threshold
     config.sensor.timestamp_resolution_us = timestamp_resolution_us
     config.sensor.refractory_period_us = refractory_period_us
     config.noise.enable_threshold_variation = threshold_variation
-    config.noise.threshold_sigma = 0.03 if threshold_variation else 0.0
-    config.noise.background_rate_hz = 0.05 if background_activity else 0.0
+    config.noise.threshold_sigma = (
+        config.noise.threshold_sigma
+        if threshold_variation and config.noise.threshold_sigma > 0
+        else (enhanced.noise.threshold_sigma if threshold_variation else 0.0)
+    )
+    config.noise.background_rate_hz = (
+        config.noise.background_rate_hz
+        if background_activity and config.noise.background_rate_hz > 0
+        else (enhanced.noise.background_rate_hz if background_activity else 0.0)
+    )
     config.input.linearize = linearization
     if fallback_fps is not None:
         config.input.fallback_fps = fallback_fps
@@ -176,8 +187,14 @@ def _render_preview(
     accumulation_time_us: int,
     overlay_opacity: float,
     processed_frames: int | None = None,
+    fallback_fps: float = 960.0,
+    timestamp_scale_us: float = 1.0,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    source = open_source(input_path)
+    source = open_source(
+        input_path,
+        fallback_fps=fallback_fps,
+        timestamp_scale_us=timestamp_scale_us,
+    )
     try:
         total = source.total_frames or 1
         limit = processed_frames or total
@@ -241,10 +258,17 @@ def main() -> None:
     )
 
     preset = st.radio("Preset", ["Ideal", "Enhanced"], horizontal=True)
-    defaults = {
-        "Ideal": (0.20, 0.20, 1, 0, False, False, False, 10),
-        "Enhanced": (0.20, 0.18, 1, 100, True, True, False, 5),
-    }[preset]
+    preset_config = SimulatorConfig.load(_preset_path(preset))
+    defaults = (
+        preset_config.sensor.positive_threshold,
+        preset_config.sensor.negative_threshold,
+        preset_config.sensor.timestamp_resolution_us,
+        preset_config.sensor.refractory_period_us,
+        preset_config.noise.enable_threshold_variation,
+        preset_config.noise.background_rate_hz > 0,
+        preset_config.input.linearize,
+        max(1, int(preset_config.visualization.accumulation_time_us // 1000)),
+    )
     source_mode = st.radio(
         "Input source",
         ["Built-in 960 FPS demo", "Upload video", "Upload image-sequence ZIP"],
@@ -342,8 +366,13 @@ def main() -> None:
             )
             with st.spinner("Running event simulation..."):
                 input_playback_path = None
-                if input_path.is_file() and input_path.suffix.lower() == ".mp4":
-                    input_playback_path = input_path
+                if input_path.is_file():
+                    if input_path.suffix.lower() == ".mp4":
+                        input_playback_path = input_path
+                    else:
+                        input_playback_path = _transcode_for_browser(
+                            input_path, workdir / "input_h264.mp4"
+                        )
                 result, video_path = _run_ui_simulation(input_path, config, workdir)
                 input_preview, event_preview, overlay_preview = _render_preview(
                     input_path,
@@ -353,6 +382,8 @@ def main() -> None:
                     int(accumulation_ms) * 1000,
                     config.visualization.overlay_opacity,
                     processed_frames=result.frames_processed,
+                    fallback_fps=config.input.fallback_fps,
+                    timestamp_scale_us=config.input.timestamp_scale_us,
                 )
             st.session_state["ui_result"] = {
                 "input_path": str(input_path),

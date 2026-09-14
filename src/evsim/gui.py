@@ -75,6 +75,7 @@ class SimulationWorker(QThread):
         try:
             total_frames = self.source.total_frames or self.max_frames or 100
             last_timestamp_us = 0
+            first_timestamp_us: int | None = None
             frames_processed = 0
             started = time.perf_counter()
 
@@ -99,6 +100,7 @@ class SimulationWorker(QThread):
                     if self.renderer is not None:
                         self.renderer.add(np.empty(0), frame.image, frame.timestamp_us)
                     frames_processed += 1
+                    first_timestamp_us = frame.timestamp_us
                     last_timestamp_us = frame.timestamp_us
                     self.progress.emit(frames_processed, total_frames)
                     continue
@@ -122,7 +124,12 @@ class SimulationWorker(QThread):
 
             elapsed = time.perf_counter() - started
             stream = EventStream.concatenate(events_list)
-            stats = stream.summary(input_duration_us=last_timestamp_us)
+            duration_us = last_timestamp_us - (
+                first_timestamp_us
+                if first_timestamp_us is not None
+                else last_timestamp_us
+            )
+            stats = stream.summary(input_duration_us=duration_us)
             stats["frames_processed"] = frames_processed
             stats["contrast_events"] = contrast_events
             stats["background_events"] = background_events
@@ -178,7 +185,7 @@ class MainWindow(QMainWindow):
         self.temp_demo_path: Path | None = None
 
         self._init_ui()
-        self._apply_preset("Realistic")
+        self._apply_preset("Enhanced")
 
     def _init_ui(self) -> None:
         central_widget = QWidget()
@@ -244,7 +251,7 @@ class MainWindow(QMainWindow):
 
         preset_layout = QHBoxLayout()
         self.combo_preset = QComboBox()
-        self.combo_preset.addItems(["Realistic", "Ideal"])
+        self.combo_preset.addItems(["Enhanced", "Ideal"])
         self.combo_preset.currentTextChanged.connect(self._apply_preset)
         preset_layout.addWidget(self.combo_preset)
         param_form.addRow("Preset:", preset_layout)
@@ -440,24 +447,26 @@ class MainWindow(QMainWindow):
         except Exception as exc:  # noqa: BLE001
             self.lbl_source_info.setText(f"Error inspecting source: {exc}")
 
+    @staticmethod
+    def _load_preset(preset_name: str) -> SimulatorConfig:
+        filename = "ideal.json" if preset_name == "Ideal" else "enhanced.json"
+        config_dir = Path(__file__).resolve().parents[2] / "configs"
+        return SimulatorConfig.load(config_dir / filename)
+
     def _apply_preset(self, preset_name: str) -> None:
-        if preset_name == "Realistic":
-            self.spin_pos_th.setValue(0.20)
-            self.spin_neg_th.setValue(0.15)
-            self.spin_refractory.setValue(100)
-            self.chk_threshold_var.setChecked(True)
-            self.chk_bg_noise.setChecked(True)
-            self.chk_linearization.setChecked(False)
-        else:  # Ideal
-            self.spin_pos_th.setValue(0.20)
-            self.spin_neg_th.setValue(0.20)
-            self.spin_refractory.setValue(0)
-            self.chk_threshold_var.setChecked(False)
-            self.chk_bg_noise.setChecked(False)
-            self.chk_linearization.setChecked(False)
+        config = self._load_preset(preset_name)
+        self.spin_pos_th.setValue(config.sensor.positive_threshold)
+        self.spin_neg_th.setValue(config.sensor.negative_threshold)
+        self.spin_ts_res.setValue(config.sensor.timestamp_resolution_us)
+        self.spin_refractory.setValue(config.sensor.refractory_period_us)
+        self.spin_accum.setValue(config.visualization.accumulation_time_us)
+        self.chk_threshold_var.setChecked(config.noise.enable_threshold_variation)
+        self.chk_bg_noise.setChecked(config.noise.background_rate_hz > 0)
+        self.chk_linearization.setChecked(config.input.linearize)
 
     def _build_config(self) -> SimulatorConfig:
-        config = SimulatorConfig()
+        config = self._load_preset(self.combo_preset.currentText())
+        enhanced = self._load_preset("Enhanced")
         config.sensor.positive_threshold = self.spin_pos_th.value()
         config.sensor.negative_threshold = self.spin_neg_th.value()
         config.sensor.timestamp_resolution_us = self.spin_ts_res.value()
@@ -467,11 +476,25 @@ class MainWindow(QMainWindow):
 
         config.noise.enable_threshold_variation = self.chk_threshold_var.isChecked()
         config.noise.threshold_sigma = (
-            0.02 if self.chk_threshold_var.isChecked() else 0.0
+            config.noise.threshold_sigma
+            if self.chk_threshold_var.isChecked() and config.noise.threshold_sigma > 0
+            else (
+                enhanced.noise.threshold_sigma
+                if self.chk_threshold_var.isChecked()
+                else 0.0
+            )
         )
-        config.noise.background_rate_hz = 0.02 if self.chk_bg_noise.isChecked() else 0.0
+        config.noise.background_rate_hz = (
+            config.noise.background_rate_hz
+            if self.chk_bg_noise.isChecked() and config.noise.background_rate_hz > 0
+            else (
+                enhanced.noise.background_rate_hz
+                if self.chk_bg_noise.isChecked()
+                else 0.0
+            )
+        )
 
-        config.input.linearize_gamma = self.chk_linearization.isChecked()
+        config.input.linearize = self.chk_linearization.isChecked()
         config.input.fallback_fps = self.spin_fallback_fps.value()
 
         max_f = self.spin_max_frames.value()
