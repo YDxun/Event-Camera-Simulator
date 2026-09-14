@@ -88,7 +88,6 @@ uv run evsim-gui
 uv run evsim gui
 ```
 
-![Desktop GUI Preview](docs/images/ui-parameters.png)
 
 ### 2. Web UI (Streamlit)
 A cloud-deployable browser interface available locally or on Streamlit Community Cloud:
