@@ -308,12 +308,23 @@ Live public app:
 
 https://event-camera-simulator-7mlnyhk52f9fp4ydasp4jd.streamlit.app/
 
+### Web UI (Streamlit)
+
 A lightweight Streamlit UI is included in `app.py`. It uses the same `evsim`
 core as the CLI and does not duplicate simulator logic.
 
 ```bash
-python -m pip install -e ".[ui]"
-python -m streamlit run app.py
+uv run streamlit run app.py
+```
+
+### Desktop GUI (PySide6)
+
+An efficient desktop GUI written with PySide6 is provided for responsive local interaction, asynchronous background simulation, parameter tuning, and real-time statistics/visual preview:
+
+```bash
+uv run evsim-gui
+# Or via CLI subcommand:
+uv run evsim gui
 ```
 
 ![Interactive UI parameter panel](docs/images/ui-parameters.png)

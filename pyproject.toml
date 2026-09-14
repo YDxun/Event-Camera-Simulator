@@ -1,17 +1,18 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["uv_build>=0.12.10,<0.13.0"]
+build-backend = "uv_build"
 
 [project]
-name = "evsim-python"
+name = "evsim"
 version = "1.0.0"
 description = "Configurable Python event-camera simulator for high-FPS frames"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-  "numpy>=1.24,<2",
-  "opencv-python>=4.8,<4.12",
+  "numpy>=1.24",
+  "opencv-python>=4.8",
   "tqdm>=4.65",
+  "tyro>=0.8",
 ]
 
 [project.optional-dependencies]
@@ -23,14 +24,22 @@ ui = [
   "streamlit>=1.30,<2",
   "imageio-ffmpeg>=0.5",
 ]
+gui = [
+  "PySide6>=6.6",
+]
+all = [
+  "pytest>=7.4",
+  "matplotlib>=3.7",
+  "streamlit>=1.30,<2",
+  "imageio-ffmpeg>=0.5",
+  "PySide6>=6.6",
+]
 
 [project.scripts]
 evsim = "evsim.cli:main"
-
-[tool.setuptools.packages.find]
-include = ["evsim*"]
+evsim-gui = "evsim.gui:main"
 
 [tool.pytest.ini_options]
-pythonpath = ["."]
+pythonpath = ["src", "."]
 testpaths = ["tests"]
 addopts = "-ra"
