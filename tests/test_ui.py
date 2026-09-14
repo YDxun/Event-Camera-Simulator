@@ -1,7 +1,7 @@
-﻿from pathlib import Path
+from pathlib import Path
 from zipfile import ZipFile
 
-import cv2
+import cv2 as cv
 import numpy as np
 import pytest
 
@@ -20,23 +20,23 @@ class _ZeroSizeMetadataCapture:
         return getattr(self._capture, name)
 
     def get(self, prop):
-        if prop in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT):
+        if prop in (cv.CAP_PROP_FRAME_WIDTH, cv.CAP_PROP_FRAME_HEIGHT):
             return 0
         return self._capture.get(prop)
 
 
 def test_video_source_falls_back_to_first_decoded_frame(tmp_path: Path, monkeypatch):
     video_path = tmp_path / "input.avi"
-    writer = cv2.VideoWriter(
-        str(video_path), cv2.VideoWriter_fourcc(*"MJPG"), 30.0, (32, 24), True
+    writer = cv.VideoWriter(
+        str(video_path), cv.VideoWriter_fourcc(*"MJPG"), 30.0, (32, 24), True
     )
     assert writer.isOpened()
     writer.write(np.zeros((24, 32, 3), dtype=np.uint8))
     writer.release()
 
-    real_capture = cv2.VideoCapture
+    real_capture = cv.VideoCapture
     monkeypatch.setattr(
-        cv2,
+        cv,
         "VideoCapture",
         lambda path: _ZeroSizeMetadataCapture(real_capture(path)),
     )
@@ -79,7 +79,8 @@ def test_ui_zip_extraction_rejects_path_traversal(tmp_path: Path):
 
 
 def test_ui_small_simulation_runs_end_to_end():
-    test_app = AppTest.from_file("app.py").run(timeout=30)
+    app_path = Path(__file__).resolve().parents[1] / "app.py"
+    test_app = AppTest.from_file(str(app_path)).run(timeout=30)
     test_app.number_input[3].set_value(5)
     test_app.button[0].click()
     test_app.run(timeout=120)

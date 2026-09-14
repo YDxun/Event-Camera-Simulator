@@ -1,4 +1,4 @@
-﻿"""Reproducible CA experiments: threshold, FPS interpolation and noise ablation."""
+"""Reproducible CA experiments: threshold, FPS interpolation and noise ablation."""
 
 from __future__ import annotations
 
@@ -10,8 +10,9 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-import cv2
+import cv2 as cv
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -38,6 +39,7 @@ def ideal_config() -> SimulatorConfig:
     config.runtime.progress = False
     return config
 
+
 def align_event_times(
     events: np.ndarray,
     reference: np.ndarray,
@@ -49,8 +51,12 @@ def align_event_times(
     matched_reference: list[float] = []
     unmatched = 0
     for polarity in (-1, 1):
-        actual_times = events["timestamp_us"][events["polarity"] == polarity].astype(np.float64)
-        reference_times = reference["timestamp_us"][reference["polarity"] == polarity].astype(np.float64)
+        actual_times = events["timestamp_us"][events["polarity"] == polarity].astype(
+            np.float64
+        )
+        reference_times = reference["timestamp_us"][
+            reference["polarity"] == polarity
+        ].astype(np.float64)
         n = len(actual_times)
         m = len(reference_times)
         if n == 0 or m == 0:
@@ -68,7 +74,8 @@ def align_event_times(
         for i in range(1, n + 1):
             for j in range(1, m + 1):
                 candidates = (
-                    cost[i - 1, j - 1] + abs(actual_times[i - 1] - reference_times[j - 1]),
+                    cost[i - 1, j - 1]
+                    + abs(actual_times[i - 1] - reference_times[j - 1]),
                     cost[i - 1, j] + gap_penalty_us,
                     cost[i, j - 1] + gap_penalty_us,
                 )
@@ -90,7 +97,9 @@ def align_event_times(
             else:
                 j -= 1
         matched_actual.extend(actual_times[index] for index in reversed(local_actual))
-        matched_reference.extend(reference_times[index] for index in reversed(local_reference))
+        matched_reference.extend(
+            reference_times[index] for index in reversed(local_reference)
+        )
         unmatched += (n - len(local_actual)) + (m - len(local_reference))
     return (
         np.asarray(matched_actual, dtype=np.float64),
@@ -223,20 +232,26 @@ def accumulation_window_comparison(output_dir: Path) -> list[dict[str, float]]:
         renderer = EventVideoRenderer(width, height, SimulatorConfig().visualization)
         renderer.add(selected, reference_frame, start_us + window_us)
         panel = renderer.render_representation_panel(reference_frame)
-        cv2.imwrite(str(output_dir / f"accumulation_{window_us}us.png"), panel)
+        cv.imwrite(str(output_dir / f"accumulation_{window_us}us.png"), panel)
         panels.append(panel)
         rows.append(
             {
                 "accumulation_time_us": window_us,
                 "event_count": int(len(selected)),
                 "active_pixels": int(
-                    len(np.unique(selected["y"].astype(np.int64) * width + selected["x"]))
+                    len(
+                        np.unique(
+                            selected["y"].astype(np.int64) * width + selected["x"]
+                        )
+                    )
                 ),
             }
         )
     montage = np.vstack(panels)
-    cv2.imwrite(str(output_dir / "accumulation_window_montage.png"), montage)
-    with (output_dir / "accumulation_window.json").open("w", encoding="utf-8") as handle:
+    cv.imwrite(str(output_dir / "accumulation_window_montage.png"), montage)
+    with (output_dir / "accumulation_window.json").open(
+        "w", encoding="utf-8"
+    ) as handle:
         json.dump(rows, handle, indent=2)
         handle.write(chr(10))
     return rows
@@ -259,7 +274,9 @@ def photometric_linearization_comparison(output_dir: Path) -> list[dict[str, flo
                 "event_rate_over_input_hz": len(stream) / duration_s,
             }
         )
-    with (output_dir / "linearization_comparison.json").open("w", encoding="utf-8") as handle:
+    with (output_dir / "linearization_comparison.json").open(
+        "w", encoding="utf-8"
+    ) as handle:
         json.dump(rows, handle, indent=2)
         handle.write(chr(10))
     plt.figure(figsize=(6, 4))
@@ -374,10 +391,13 @@ def fps_sweep(output_dir: Path) -> list[dict[str, float]]:
     plt.close()
     return rows
 
+
 def write_markdown_report(output_dir: Path, summary: dict) -> Path:
     root = output_dir.parent
     demo_path = root / "demo" / "statistics.json"
-    demo = json.loads(demo_path.read_text(encoding="utf-8")) if demo_path.exists() else {}
+    demo = (
+        json.loads(demo_path.read_text(encoding="utf-8")) if demo_path.exists() else {}
+    )
     benchmark = summary["benchmark"]
     validation = summary["validation"]
     lines: list[str] = []
@@ -385,8 +405,12 @@ def write_markdown_report(output_dir: Path, summary: dict) -> Path:
     lines.append("")
     lines.append("## Scope")
     lines.append("")
-    lines.append("High-FPS frames are converted to asynchronous `(x, y, t, p)` events using")
-    lines.append("log-intensity contrast thresholding. No edge detection, tracking, SLAM or")
+    lines.append(
+        "High-FPS frames are converted to asynchronous `(x, y, t, p)` events using"
+    )
+    lines.append(
+        "log-intensity contrast thresholding. No edge detection, tracking, SLAM or"
+    )
     lines.append("downstream learning model is used.")
     lines.append("")
     lines.append("## Model conventions")
@@ -437,12 +461,16 @@ def write_markdown_report(output_dir: Path, summary: dict) -> Path:
             f"{row['event_rate_over_input_hz']:.1f} | {row['count_times_threshold']:.1f} |"
         )
     lines.append("")
-    lines.append("The event count decreases monotonically as `C` increases, while `N*C`")
+    lines.append(
+        "The event count decreases monotonically as `C` increases, while `N*C`"
+    )
     lines.append("remains in the same order of magnitude, consistent with `N ~ 1/C`.")
     lines.append("")
     lines.append("## FPS convergence")
     lines.append("")
-    lines.append("| FPS | Events | Relative count diff | Matched | Unmatched | Timestamp RMSE vs 3840 FPS |")
+    lines.append(
+        "| FPS | Events | Relative count diff | Matched | Unmatched | Timestamp RMSE vs 3840 FPS |"
+    )
     lines.append("|---:|---:|---:|---:|---:|---:|")
     for row in summary["fps_sweep"]:
         lines.append(
@@ -453,9 +481,15 @@ def write_markdown_report(output_dir: Path, summary: dict) -> Path:
         )
     lines.append("")
     lines.append("Matching method: events are aligned separately by polarity using an")
-    lines.append("order-preserving dynamic-programming sequence alignment. The match cost")
-    lines.append("is absolute timestamp difference and the insertion/deletion penalty is")
-    lines.append("5000 us. RMSE is computed only over matched pairs; unmatched events are")
+    lines.append(
+        "order-preserving dynamic-programming sequence alignment. The match cost"
+    )
+    lines.append(
+        "is absolute timestamp difference and the insertion/deletion penalty is"
+    )
+    lines.append(
+        "5000 us. RMSE is computed only over matched pairs; unmatched events are"
+    )
     lines.append("reported explicitly and excluded from RMSE.")
     lines.append("")
     lines.append("The timestamp error decreases as input FPS increases under the")
@@ -483,7 +517,9 @@ def write_markdown_report(output_dir: Path, summary: dict) -> Path:
         )
     lines.append("")
     lines.append("Smaller windows preserve more temporal detail but are sparse. Larger")
-    lines.append("windows improve spatial visibility while reducing temporal resolution.")
+    lines.append(
+        "windows improve spatial visibility while reducing temporal resolution."
+    )
     lines.append("Accumulation affects visualization only, not the raw event stream.")
     lines.append("")
     lines.append("## Photometric preprocessing")
@@ -522,7 +558,9 @@ def write_markdown_report(output_dir: Path, summary: dict) -> Path:
     lines.append("- Independent pixels without readout arbitration")
     lines.append("- Fixed per-pixel Gaussian threshold mismatch")
     lines.append("- Simplified Poisson background activity")
-    lines.append("- Source motion blur, temporal aliasing and saturation are not recovered")
+    lines.append(
+        "- Source motion blur, temporal aliasing and saturation are not recovered"
+    )
     lines.append("- No tracking, detection, optical flow, SLAM, SNN or reconstruction")
     lines.append("")
     lines.append("## Verification artifacts")
@@ -533,7 +571,9 @@ def write_markdown_report(output_dir: Path, summary: dict) -> Path:
     lines.append("- `noise_ablation.json` and `noise_ablation.png`")
     lines.append("- `accumulation_window.json` and `accumulation_window_montage.png`")
     lines.append("- `linearization_comparison.json` and `linearization_comparison.png`")
-    lines.append("- `../demo/events.csv`, `../demo/events.npz` and `../demo/event_video.avi`")
+    lines.append(
+        "- `../demo/events.csv`, `../demo/events.npz` and `../demo/event_video.avi`"
+    )
     lines.append("")
     report_path = root / "REPORT.md"
     report_path.write_text(chr(10).join(lines) + chr(10), encoding="utf-8")
