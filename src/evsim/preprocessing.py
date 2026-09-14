@@ -1,4 +1,4 @@
-﻿"""Photometric preprocessing: grayscale DN -> linear intensity -> log intensity."""
+"""Photometric preprocessing: grayscale DN -> linear intensity -> log intensity."""
 
 from __future__ import annotations
 
@@ -17,8 +17,7 @@ def to_intensity(image: np.ndarray, config: InputConfig) -> np.ndarray:
         intensity = np.power(intensity, np.float32(config.gamma))
     return intensity
 
-def to_log_intensity(
-    image: np.ndarray, config: InputConfig, sensor: SensorConfig
-) -> np.ndarray:
+
+def to_log_intensity(image: np.ndarray, config: InputConfig, sensor: SensorConfig) -> np.ndarray:
     intensity = to_intensity(image, config)
     return np.log(intensity + np.float32(sensor.log_epsilon), dtype=np.float32)

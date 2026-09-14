@@ -25,10 +25,7 @@ def test_config_rejects_unknown_keys(tmp_path):
 
 def test_demo_cli_executes(tmp_path: Path, capsys):
     output_dir = tmp_path / "demo_test"
-    assert (
-        main(["demo", "-o", str(output_dir), "--seconds", "0.05", "--fps", "200.0"])
-        == 0
-    )
+    assert main(["demo", "-o", str(output_dir), "--seconds", "0.05", "--fps", "200.0"]) == 0
     result = json.loads(capsys.readouterr().out)
     assert result["frames_processed"] == 10
     assert (output_dir / "events.npz").is_file()

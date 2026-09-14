@@ -1,4 +1,4 @@
-﻿"""Event representation and event-stream IO."""
+"""Event representation and event-stream IO."""
 
 from __future__ import annotations
 
@@ -101,7 +101,7 @@ class EventStream:
         np.savez_compressed(path, events=self.events)
 
     @classmethod
-    def load_npz(cls, path: str | Path) -> "EventStream":
+    def load_npz(cls, path: str | Path) -> EventStream:
         path = Path(path)
         with np.load(path, allow_pickle=False) as data:
             if "events" not in data:
@@ -109,15 +109,11 @@ class EventStream:
             return cls(data["events"].astype(EVENT_DTYPE, copy=False))
 
     @classmethod
-    def load_csv(cls, path: str | Path) -> "EventStream":
+    def load_csv(cls, path: str | Path) -> EventStream:
         path = Path(path)
-        table = np.genfromtxt(
-            path, delimiter=",", names=True, dtype=None, encoding="utf-8"
-        )
+        table = np.genfromtxt(path, delimiter=",", names=True, dtype=None, encoding="utf-8")
         events = np.empty(np.size(table), dtype=EVENT_DTYPE)
-        events["timestamp_us"] = np.rint(
-            table["timestamp_s"] * 1_000_000.0
-        ).astype(np.int64)
+        events["timestamp_us"] = np.rint(table["timestamp_s"] * 1_000_000.0).astype(np.int64)
         events["x"] = table["x"].astype(np.uint16)
         events["y"] = table["y"].astype(np.uint16)
         events["polarity"] = table["polarity"].astype(np.int8)
@@ -139,9 +135,7 @@ class EventStream:
                 "off_events": 0,
                 "active_event_duration_s": 0.0,
                 "input_duration_s": (
-                    input_duration_us / 1_000_000.0
-                    if input_duration_us is not None
-                    else None
+                    input_duration_us / 1_000_000.0 if input_duration_us is not None else None
                 ),
                 "event_rate_over_active_hz": 0.0,
                 "event_rate_over_input_hz": 0.0,
@@ -153,9 +147,7 @@ class EventStream:
         active_duration_us = int(ts[-1] - ts[0])
         active_duration_s = active_duration_us / 1_000_000.0
         input_duration_s = (
-            input_duration_us / 1_000_000.0
-            if input_duration_us is not None
-            else active_duration_s
+            input_duration_us / 1_000_000.0 if input_duration_us is not None else active_duration_s
         )
         on_count = int(np.count_nonzero(self.polarity > 0))
         off_count = int(np.count_nonzero(self.polarity < 0))

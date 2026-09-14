@@ -1,4 +1,4 @@
-﻿"""Analytic and cross-backend validation for the event model."""
+"""Analytic and cross-backend validation for the event model."""
 
 from __future__ import annotations
 
@@ -24,8 +24,7 @@ def _stream(config: SimulatorConfig, frames: list[np.ndarray]) -> np.ndarray:
     sim = EventSimulator(config)
     sim.initialize(frames[0], 0)
     parts = [
-        sim.process(frame, index * 1000).events
-        for index, frame in enumerate(frames[1:], start=1)
+        sim.process(frame, index * 1000).events for index, frame in enumerate(frames[1:], start=1)
     ]
     return np.concatenate(parts) if parts else np.empty(0)
 
@@ -80,9 +79,13 @@ def run_core_validation(seed: int = 7) -> dict[str, Any]:
     negative = bool(len(events) > 1 and np.all(events["polarity"] == -1))
     checks.append(Check("dark_ramp_multiple_negative", negative, {"events": len(events)}))
 
-    analytic_cfg = _ideal_config(**{"sensor.positive_threshold": 0.08, "sensor.negative_threshold": 0.08})
+    analytic_cfg = _ideal_config(
+        **{"sensor.positive_threshold": 0.08, "sensor.negative_threshold": 0.08}
+    )
     expected = _expected_positive_times(analytic_cfg, 5, 250, 1000)
-    actual = _stream(analytic_cfg, [np.full((1, 1), 5, dtype=np.uint8), np.full((1, 1), 250, dtype=np.uint8)])
+    actual = _stream(
+        analytic_cfg, [np.full((1, 1), 5, dtype=np.uint8), np.full((1, 1), 250, dtype=np.uint8)]
+    )
     overlap = min(len(expected), len(actual))
     timestamp_errors = (
         np.abs(actual["timestamp_us"][:overlap] - expected[:overlap])
@@ -107,7 +110,9 @@ def run_core_validation(seed: int = 7) -> dict[str, Any]:
         )
     )
 
-    asym_cfg = _ideal_config(**{"sensor.positive_threshold": 0.15, "sensor.negative_threshold": 0.30})
+    asym_cfg = _ideal_config(
+        **{"sensor.positive_threshold": 0.15, "sensor.negative_threshold": 0.30}
+    )
     positive = _stream(asym_cfg, [black, white])
     negative = _stream(asym_cfg, [white, black])
     asym_pass = bool(
@@ -125,7 +130,9 @@ def run_core_validation(seed: int = 7) -> dict[str, Any]:
 
     quant_cfg = _ideal_config(**{"sensor.timestamp_resolution_us": 100})
     events = _stream(quant_cfg, [black, white])
-    quant_gaps = np.diff(events["timestamp_us"]) if len(events) > 1 else np.array([], dtype=np.int64)
+    quant_gaps = (
+        np.diff(events["timestamp_us"]) if len(events) > 1 else np.array([], dtype=np.int64)
+    )
     duplicate_bins = int(np.count_nonzero(quant_gaps == 0))
     quantized = bool(
         len(events)
@@ -216,6 +223,7 @@ def run_core_validation(seed: int = 7) -> dict[str, Any]:
         "checks": [asdict(check) for check in checks],
     }
 
+
 def benchmark_backends(
     width: int = 320,
     height: int = 240,
@@ -237,7 +245,9 @@ def benchmark_backends(
         results[backend] = {
             "elapsed_s": elapsed,
             "frames_per_s": (frames - 1) / elapsed if elapsed > 0 else 0.0,
-            "mega_pixel_frames_per_s": (frames - 1) * width * height / elapsed / 1e6 if elapsed > 0 else 0.0,
+            "mega_pixel_frames_per_s": (frames - 1) * width * height / elapsed / 1e6
+            if elapsed > 0
+            else 0.0,
             "events": total,
         }
     vec = results["vectorized"]["elapsed_s"]

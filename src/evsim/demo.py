@@ -38,7 +38,7 @@ def write_synthetic_video(
 ) -> Path:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    total = int(round(fps * seconds))
+    total = round(fps * seconds)
     writer = cv.VideoWriter(
         str(path),
         cv.VideoWriter_fourcc(*"MJPG"),
@@ -69,9 +69,7 @@ def run_demo(
 
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
-    input_video = write_synthetic_video(
-        output / "input_960fps.avi", fps, seconds, width, height
-    )
+    input_video = write_synthetic_video(output / "input_960fps.avi", fps, seconds, width, height)
 
     config = SimulatorConfig()
     config.input.fallback_fps = fps
@@ -111,7 +109,5 @@ def run_demo(
     final_frame = demo_frame(width, height, total - 1, total)
     preview = EventVideoRenderer(width, height, config.visualization)
     preview.add(result.events, final_frame, total * 1_000_000)
-    cv.imwrite(
-        str(output / "event_preview.png"), preview.render_combined_panel(final_frame)
-    )
+    cv.imwrite(str(output / "event_preview.png"), preview.render_combined_panel(final_frame))
     return stats

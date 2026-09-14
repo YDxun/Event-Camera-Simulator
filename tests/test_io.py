@@ -1,8 +1,7 @@
 from pathlib import Path
 
-import numpy as np
-
 import cv2 as cv
+import numpy as np
 
 from evsim.config import SimulatorConfig
 from evsim.events import EVENT_DTYPE, EventStream
@@ -40,9 +39,7 @@ def test_image_sequence_natural_order_and_timestamps(tmp_path: Path):
 
 def test_video_source_and_renderer(tmp_path: Path):
     video_path = tmp_path / "input.avi"
-    writer = cv.VideoWriter(
-        str(video_path), cv.VideoWriter_fourcc(*"MJPG"), 30.0, (32, 24), True
-    )
+    writer = cv.VideoWriter(str(video_path), cv.VideoWriter_fourcc(*"MJPG"), 30.0, (32, 24), True)
     assert writer.isOpened()
     for value in (0, 60, 120):
         gray = np.full((24, 32), value, dtype=np.uint8)

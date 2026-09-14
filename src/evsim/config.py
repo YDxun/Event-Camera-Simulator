@@ -1,4 +1,4 @@
-﻿"""Configuration model for the Python event-camera simulator."""
+"""Configuration model for the Python event-camera simulator."""
 
 from __future__ import annotations
 
@@ -129,7 +129,7 @@ class SimulatorConfig:
         path.write_text(json.dumps(self.to_dict(), indent=2) + "\n", encoding="utf-8")
 
     @classmethod
-    def from_dict(cls, raw: dict[str, Any] | None) -> "SimulatorConfig":
+    def from_dict(cls, raw: dict[str, Any] | None) -> SimulatorConfig:
         raw = raw or {}
         allowed_sections = {f.name for f in fields(cls)}
         unknown = set(raw) - allowed_sections
@@ -139,7 +139,7 @@ class SimulatorConfig:
         def build(section_cls: type[T], values: Any) -> T:
             values = values or {}
             if not isinstance(values, dict):
-                raise ValueError(f"{section_cls.__name__} must be a JSON object")
+                raise TypeError(f"{section_cls.__name__} must be a JSON object")
             section_allowed = {f.name for f in fields(section_cls)}
             extra = set(values) - section_allowed
             if extra:
@@ -157,7 +157,7 @@ class SimulatorConfig:
         )
 
     @classmethod
-    def load(cls, path: str | Path | None) -> "SimulatorConfig":
+    def load(cls, path: str | Path | None) -> SimulatorConfig:
         if path is None or str(path) == "":
             return cls()
         path = Path(path)
@@ -165,5 +165,5 @@ class SimulatorConfig:
             raise FileNotFoundError(f"Configuration file not found: {path}")
         raw = json.loads(path.read_text(encoding="utf-8-sig"))
         if not isinstance(raw, dict):
-            raise ValueError("Configuration root must be a JSON object")
+            raise TypeError("Configuration root must be a JSON object")
         return cls.from_dict(raw)

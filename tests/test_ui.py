@@ -6,9 +6,9 @@ import numpy as np
 import pytest
 
 pytest.importorskip("streamlit")
+import app
 from streamlit.testing.v1 import AppTest
 
-import app
 from evsim.sources import VideoSource
 
 
@@ -27,9 +27,7 @@ class _ZeroSizeMetadataCapture:
 
 def test_video_source_falls_back_to_first_decoded_frame(tmp_path: Path, monkeypatch):
     video_path = tmp_path / "input.avi"
-    writer = cv.VideoWriter(
-        str(video_path), cv.VideoWriter_fourcc(*"MJPG"), 30.0, (32, 24), True
-    )
+    writer = cv.VideoWriter(str(video_path), cv.VideoWriter_fourcc(*"MJPG"), 30.0, (32, 24), True)
     assert writer.isOpened()
     writer.write(np.zeros((24, 32, 3), dtype=np.uint8))
     writer.release()

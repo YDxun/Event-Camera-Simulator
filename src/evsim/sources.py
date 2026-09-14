@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterator
+from typing import Self
 
 import cv2 as cv
 import numpy as np
@@ -37,7 +38,7 @@ class FrameSource:
     def close(self) -> None:
         pass
 
-    def __enter__(self) -> "FrameSource":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *_: object) -> None:
@@ -46,8 +47,7 @@ class FrameSource:
 
 def _natural_key(path: Path) -> list[object]:
     return [
-        int(token) if token.isdigit() else token.lower()
-        for token in re.split(r"(\d+)", path.stem)
+        int(token) if token.isdigit() else token.lower() for token in re.split(r"(\d+)", path.stem)
     ]
 
 
@@ -121,7 +121,7 @@ class VideoSource(FrameSource):
                 break
             if image is None or image.size == 0:
                 continue
-            timestamp_us = int(round((self._index / self.fps) * 1_000_000.0))
+            timestamp_us = round((self._index / self.fps) * 1_000_000.0)
             yield Frame(_to_gray(image), timestamp_us, self._index)
             self._index += 1
 
@@ -198,9 +198,7 @@ class ImageSequenceSource(FrameSource):
                 if match:
                     values.append(float(match.group(0)))
         if len(values) >= len(self.paths):
-            timestamps = np.rint(np.asarray(values[: len(self.paths)]) * scale).astype(
-                np.int64
-            )
+            timestamps = np.rint(np.asarray(values[: len(self.paths)]) * scale).astype(np.int64)
             if np.all(np.diff(timestamps) > 0):
                 return timestamps
         self._timestamp_file = None
@@ -230,14 +228,10 @@ class ImageSequenceSource(FrameSource):
             "frames": self.total_frames,
             "fallback_fps": self.fps,
             "has_timestamp_file": self.has_timestamps,
-            "timestamp_file": str(self._timestamp_file)
-            if self._timestamp_file
-            else None,
+            "timestamp_file": str(self._timestamp_file) if self._timestamp_file else None,
             "timestamp_start_us": int(self.timestamps_us[0]),
             "timestamp_end_us": int(self.timestamps_us[-1]),
-            "duration_s": float(
-                (self.timestamps_us[-1] - self.timestamps_us[0]) / 1_000_000.0
-            ),
+            "duration_s": float((self.timestamps_us[-1] - self.timestamps_us[0]) / 1_000_000.0),
         }
 
 
@@ -275,9 +269,7 @@ def inspect_source(
             "frames": source.total_frames,
             "fps": source.fps,
             "duration_s": (
-                source.total_frames / source.fps
-                if source.total_frames and source.fps
-                else None
+                source.total_frames / source.fps if source.total_frames and source.fps else None
             ),
         }
     finally:

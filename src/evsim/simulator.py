@@ -1,4 +1,4 @@
-﻿"""Vectorized and pixel-loop event generation from frame pairs."""
+"""Vectorized and pixel-loop event generation from frame pairs."""
 
 from __future__ import annotations
 
@@ -53,17 +53,10 @@ class EventSimulator:
         sensor = self.config.sensor
         pos = np.full(count, sensor.positive_threshold, dtype=np.float32)
         neg = np.full(count, sensor.negative_threshold, dtype=np.float32)
-        if (
-            self.config.noise.enable_threshold_variation
-            and self.config.noise.threshold_sigma > 0
-        ):
+        if self.config.noise.enable_threshold_variation and self.config.noise.threshold_sigma > 0:
             sigma = self.config.noise.threshold_sigma
-            pos = self.rng.normal(sensor.positive_threshold, sigma, count).astype(
-                np.float32
-            )
-            neg = self.rng.normal(sensor.negative_threshold, sigma, count).astype(
-                np.float32
-            )
+            pos = self.rng.normal(sensor.positive_threshold, sigma, count).astype(np.float32)
+            neg = self.rng.normal(sensor.negative_threshold, sigma, count).astype(np.float32)
             np.maximum(pos, np.float32(1e-4), out=pos)
             np.maximum(neg, np.float32(1e-4), out=neg)
 
@@ -114,9 +107,7 @@ class EventSimulator:
         kind_parts: list[np.ndarray] = []
 
         if total_contrast:
-            pixels = np.repeat(
-                np.arange(contrast_counts.size, dtype=np.int64), contrast_counts
-            )
+            pixels = np.repeat(np.arange(contrast_counts.size, dtype=np.int64), contrast_counts)
             starts = np.cumsum(contrast_counts) - contrast_counts
             rank = np.arange(total_contrast, dtype=np.int64) - starts[pixels]
             k = rank + 1
@@ -131,9 +122,7 @@ class EventSimulator:
             denominator = log1[pixels] - log0[pixels]
             alpha = np.zeros(total_contrast, dtype=np.float64)
             nonzero = np.abs(denominator) > 1e-12
-            alpha[nonzero] = (
-                (levels[nonzero] - log0[pixels][nonzero]) / denominator[nonzero]
-            )
+            alpha[nonzero] = (levels[nonzero] - log0[pixels][nonzero]) / denominator[nonzero]
             np.clip(alpha, 0.0, 1.0, out=alpha)
             if self.config.simulation.interpolation == "linear":
                 times = np.rint(t0 + alpha * float(t1 - t0)).astype(np.int64)
@@ -156,9 +145,7 @@ class EventSimulator:
                     np.arange(background_counts.size, dtype=np.int64),
                     background_counts,
                 )
-                bg_times = self.rng.integers(
-                    t0, t1 + 1, size=total_background, dtype=np.int64
-                )
+                bg_times = self.rng.integers(t0, t1 + 1, size=total_background, dtype=np.int64)
                 bg_polarity = self.rng.choice(
                     np.array([-1, 1], dtype=np.int8), size=total_background
                 )
@@ -273,17 +260,13 @@ class EventSimulator:
                 ratio = np.float32(delta / self.pos_thresholds[pixel])
                 count = int(np.floor(float(ratio) + 1e-12))
                 for k in range(1, count + 1):
-                    level = np.float32(
-                        ref_value + np.float32(k) * self.pos_thresholds[pixel]
-                    )
+                    level = np.float32(ref_value + np.float32(k) * self.pos_thresholds[pixel])
                     candidates.append((self._interpolate_time(pixel, level, t0, t1), 0, 1, level))
             elif delta <= -self.neg_thresholds[pixel]:
                 ratio = np.float32(-delta / self.neg_thresholds[pixel])
                 count = int(np.floor(float(ratio) + 1e-12))
                 for k in range(1, count + 1):
-                    level = np.float32(
-                        ref_value - np.float32(k) * self.neg_thresholds[pixel]
-                    )
+                    level = np.float32(ref_value - np.float32(k) * self.neg_thresholds[pixel])
                     candidates.append((self._interpolate_time(pixel, level, t0, t1), 0, -1, level))
 
             if self.config.noise.background_rate_hz > 0:
@@ -320,36 +303,28 @@ class EventSimulator:
         assert self.last_log_intensity is not None
         step = float(
             np.float32(
-                np.float32(self._current_log1[pixel])
-                - np.float32(self.last_log_intensity[pixel])
+                np.float32(self._current_log1[pixel]) - np.float32(self.last_log_intensity[pixel])
             )
         )
         if self.config.simulation.interpolation == "none" or abs(step) <= 1e-12:
             alpha = 1.0
         else:
-            numerator = np.float32(
-                np.float32(level) - np.float32(self.last_log_intensity[pixel])
-            )
+            numerator = np.float32(np.float32(level) - np.float32(self.last_log_intensity[pixel]))
             alpha = float(np.float32(numerator / np.float32(step)))
             alpha = min(1.0, max(0.0, alpha))
-        return int(round(t0 + alpha * float(t1 - t0)))
+        return round(t0 + alpha * float(t1 - t0))
 
     def process(self, image: np.ndarray, timestamp_us: int) -> PairEvents:
         if not self.initialized:
             raise RuntimeError("Simulator must be initialized before processing frames")
         if timestamp_us <= self.last_timestamp_us:
-            raise ValueError(
-                f"Non-monotonic timestamp: {timestamp_us} <= {self.last_timestamp_us}"
-            )
+            raise ValueError(f"Non-monotonic timestamp: {timestamp_us} <= {self.last_timestamp_us}")
         if image.shape != (self.height, self.width):
             raise ValueError(
-                f"Frame shape {image.shape} does not match sensor "
-                f"{(self.height, self.width)}"
+                f"Frame shape {image.shape} does not match sensor {(self.height, self.width)}"
             )
 
-        log1 = to_log_intensity(
-            image, self.config.input, self.config.sensor
-        ).reshape(-1)
+        log1 = to_log_intensity(image, self.config.input, self.config.sensor).reshape(-1)
         self._current_log1 = log1
         if self.config.simulation.backend == "vectorized":
             result = self._process_pair_vectorized(log1, timestamp_us)

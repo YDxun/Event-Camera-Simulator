@@ -1,4 +1,4 @@
-﻿"""Python event-camera simulator package."""
+"""Python event-camera simulator package."""
 
 from .config import SimulatorConfig
 from .events import EventStream

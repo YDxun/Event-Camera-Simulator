@@ -1,4 +1,4 @@
-﻿"""End-to-end simulation pipeline."""
+"""End-to-end simulation pipeline."""
 
 from __future__ import annotations
 
@@ -97,6 +97,7 @@ def simulate_source(
     if renderer is not None and renderer.actual_output_path is not None:
         result.video_path = str(renderer.actual_output_path)
     return result
+
 
 def simulate_path(path: str | Path, config: SimulatorConfig) -> SimulationResult:
     source = open_source(

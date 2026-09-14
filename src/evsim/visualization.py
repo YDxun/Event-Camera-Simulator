@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Self
 
 import cv2 as cv
 import numpy as np
@@ -186,7 +187,7 @@ class EventVideoRenderer:
             self.writer.release()
             self.writer = None
 
-    def __enter__(self) -> "EventVideoRenderer":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *_: object) -> None:

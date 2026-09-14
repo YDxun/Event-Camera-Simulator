@@ -6,7 +6,7 @@ import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Annotated, Literal, Union
+from typing import Annotated, Literal
 
 import tyro
 
@@ -39,9 +39,7 @@ def _apply_overrides(config: SimulatorConfig, cmd: SimulateCmd) -> None:
     config.validate()
 
 
-def _write_result(
-    result_stats: dict, stream: EventStream, config: SimulatorConfig
-) -> None:
+def _write_result(result_stats: dict, stream: EventStream, config: SimulatorConfig) -> None:
     if config.output.csv_path:
         stream.save_csv(config.output.csv_path)
     if config.output.npz_path:
@@ -89,9 +87,7 @@ class SimulateCmd:
     """Path to save event stream in compressed NPZ format."""
     video: Annotated[str | None, tyro.conf.arg(aliases=["-v"])] = None
     """Path to save illustrative event accumulation video."""
-    backend: Annotated[
-        Literal["vectorized", "loop"] | None, tyro.conf.arg(aliases=["-b"])
-    ] = None
+    backend: Annotated[Literal["vectorized", "loop"] | None, tyro.conf.arg(aliases=["-b"])] = None
     """Simulation backend: 'vectorized' (default, fast) or 'loop' (reference)."""
     positive_threshold: float | None = None
     """Positive contrast threshold C+."""
@@ -130,9 +126,7 @@ class SimulateCmd:
         )
         renderer = None
         if config.visualization.output_video:
-            renderer = EventVideoRenderer(
-                source.width, source.height, config.visualization
-            )
+            renderer = EventVideoRenderer(source.width, source.height, config.visualization)
             renderer.open(config.visualization.output_video)
         try:
             result = simulate_source(
@@ -234,14 +228,14 @@ class GuiCmd:
         return gui_main()
 
 
-EvsimCommands = Union[
-    Annotated[InspectCmd, tyro.conf.subcommand(name="inspect")],
-    Annotated[SimulateCmd, tyro.conf.subcommand(name="simulate")],
-    Annotated[ValidateCmd, tyro.conf.subcommand(name="validate")],
-    Annotated[BenchmarkCmd, tyro.conf.subcommand(name="benchmark")],
-    Annotated[DemoCmd, tyro.conf.subcommand(name="demo")],
-    Annotated[GuiCmd, tyro.conf.subcommand(name="gui")],
-]
+EvsimCommands = (
+    Annotated[InspectCmd, tyro.conf.subcommand(name="inspect")]
+    | Annotated[SimulateCmd, tyro.conf.subcommand(name="simulate")]
+    | Annotated[ValidateCmd, tyro.conf.subcommand(name="validate")]
+    | Annotated[BenchmarkCmd, tyro.conf.subcommand(name="benchmark")]
+    | Annotated[DemoCmd, tyro.conf.subcommand(name="demo")]
+    | Annotated[GuiCmd, tyro.conf.subcommand(name="gui")]
+)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -259,7 +253,7 @@ def main(argv: list[str] | None = None) -> int:
         if isinstance(code, int):
             return code
         return 2
-    except (FileNotFoundError, RuntimeError, ValueError) as exc:
+    except (FileNotFoundError, RuntimeError, ValueError, TypeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 
