@@ -192,6 +192,8 @@ class EventSimulator:
         neg_counts = _crossing_counts(-delta, self.neg_thresholds)
         contrast_counts = pos_counts + neg_counts
         total_contrast = int(contrast_counts.sum())
+        # Check before np.repeat; one extreme frame should not exhaust the machine.
+        # 在展开候选事件前拦截异常规模，错误信息也更容易理解。
         limit = self.config.runtime.max_candidate_events_per_frame
         if limit and total_contrast > limit:
             raise RuntimeError(

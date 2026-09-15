@@ -9,11 +9,9 @@ This repository is organized around a single simulator core and several thin int
 | `src/evsim/` | Canonical simulator implementation |
 | `configs/` | Ideal and Enhanced parameter presets |
 | `tests/` | Unit, backend, IO, CLI, Streamlit and GUI tests |
-| `scripts/` | Experiment automation and submission packaging |
-| `docs/` | Architecture, configuration, experiments, demo and submission guidance |
-| `specs/` | Original course specification and lecture transcripts |
+| `scripts/` | Reproducible experiment automation |
+| `docs/` | Architecture, configuration, experiments, and demo guidance |
 | `output/` | Reproducible generated results; safe to regenerate |
-| `submission/` | Stable final-report drafts and submission checklist |
 | `app.py` | Streamlit web entrypoint |
 | `src/evsim/gui.py` | Optional PySide6 desktop entrypoint |
 
@@ -27,7 +25,6 @@ configs/
 scripts/
 tests/
 docs/
-submission/
 README.md
 pyproject.toml
 requirements.txt
@@ -41,7 +38,6 @@ output/validation.json
 output/benchmark.json
 output/experiments/
 output/demo/
-output/REPORT.md
 ```
 
 Do not hand-edit generated numeric tables when they can be regenerated. Run the workflows below instead.

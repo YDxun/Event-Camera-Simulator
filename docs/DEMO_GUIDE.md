@@ -57,5 +57,5 @@ uv run evsim-gui
 
 - Validation is analytical model-consistency validation, not real-sensor validation.
 - The noise model is a simplified phenomenological model.
-- Independent pixels are an accepted course-level simplification; readout arbitration is not simulated.
+- Pixels are modeled independently; readout arbitration is outside the simulator scope.
 - The source video cannot recover information already lost to motion blur, aliasing or saturation.

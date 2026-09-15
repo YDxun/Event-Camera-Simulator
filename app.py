@@ -57,6 +57,8 @@ def _safe_extract_zip(path: Path, destination: Path) -> Path:
     root = destination.resolve()
     with zipfile.ZipFile(path) as archive:
         members = archive.infolist()
+        # Validate the whole archive before writing any member to disk.
+        # 先做完整体检，再解压，失败时不会留下半套输入文件。
         if len(members) > MAX_ZIP_FILES:
             raise ValueError(f"ZIP contains more than {MAX_ZIP_FILES:,} entries")
         total_size = sum(member.file_size for member in members)

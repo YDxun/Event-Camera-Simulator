@@ -1,55 +1,98 @@
 # Event Camera Simulator (`evsim`)
 
-[![Deploy to Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://event-camera-simulator-7mlnyhk52f9fp4ydasp4jd.streamlit.app/)
 [![Python 3.14+](https://img.shields.io/badge/python-3.14+-blue.svg)](https://www.python.org/)
-[![uv native](https://img.shields.io/badge/uv-native-purple.svg)](https://github.com/astral-sh/uv)
+[![CI](https://github.com/YDxun/Event-Camera-Simulator/actions/workflows/ci.yml/badge.svg)](https://github.com/YDxun/Event-Camera-Simulator/actions/workflows/ci.yml)
+[![Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://event-camera-simulator-7mlnyhk52f9fp4ydasp4jd.streamlit.app/)
 
-A high-performance, verifiable neuromorphic event camera simulator implemented in Python. It transforms high-frame-rate video or image sequences into asynchronous event streams `(x, y, t, p)` using a stateful log-intensity contrast-threshold model.
+`evsim` is a team-built, verifiable simulator that converts high-frame-rate video
+or image sequences into asynchronous event-camera streams `(x, y, t, p)`. It
+models photoreceptor response and sensor timing while keeping the simulation core
+independent from the command-line, desktop, and web interfaces.
+
+## Why This Project
+
+Conventional cameras record complete frames at fixed intervals. An event camera
+reports only local brightness changes, producing sparse events with microsecond
+timestamps. Real sensors and suitable datasets are not always available, so this
+project provides a reproducible way to study event generation from familiar frame
+inputs.
+
+The simulator focuses on sensor transduction. It does not perform downstream tasks
+such as object detection, tracking, optical flow, or SLAM.
+
+## How It Works
 
 ```text
-High-FPS Video / Image Sequence + Sensor Config
-                     │
-                     ▼
-           Event Camera Simulator
-                     │
-                     ▼
-  (x, y, t, p) Event Stream + Illustrative Video
+Video / image sequence + sensor configuration
+                    |
+                    v
+        Timestamp-aware frame source
+                    |
+                    v
+ Normalize -> optional linearization -> log intensity
+                    |
+                    v
+ Stateful threshold crossings and sub-frame interpolation
+                    |
+                    v
+ Timestamp quantization, refractory filtering, and noise
+                    |
+                    v
+ Event stream + statistics + optional visualization
 ```
 
-> [!NOTE]
-> The simulator operates strictly at the photoreceptor transduction level (transducing optical intensity into events). It does not perform computer vision downstream tasks such as edge detection, tracking, or SLAM.
+For each pixel, normalized intensity is transformed into log intensity:
 
----
+```text
+L(x, y, t) = ln(I(x, y, t) + epsilon)
+```
+
+An ON event is emitted when `L - L_ref >= C+`; an OFF event is emitted when
+`L - L_ref <= -C-`. Multiple threshold crossings can occur between two frames.
+Their timestamps are estimated with piecewise-linear interpolation, quantized to
+the configured sensor clock, and filtered by a per-pixel refractory period.
+
+The enhanced model can additionally simulate fixed per-pixel threshold mismatch
+and Poisson background activity. See [Architecture and Mathematical Design](docs/design.md)
+for the equations and modeling assumptions.
+
+## Features
+
+- Real presentation timestamps from PyAV, including variable-frame-rate video.
+- Naturally ordered image sequences with strict timestamp-file validation.
+- Fast vectorized NumPy backend plus a readable pixel-loop reference backend.
+- Configurable thresholds, time resolution, refractory period, and sensor noise.
+- Memory-bounded streaming output for long simulations.
+- CSV and compressed NPZ event output with JSON diagnostics.
+- Streamlit web UI, PySide6 desktop GUI, and a typed Tyro CLI.
+- Analytical validation and backend-equivalence checks.
 
 ## Installation
 
-`evsim` is native to [`uv`](https://docs.astral.sh/uv/) and targets modern Python (>=3.14).
+Python 3.14 and [`uv`](https://docs.astral.sh/uv/) are recommended:
 
 ```bash
-# Clone the repository
 git clone https://github.com/YDxun/Event-Camera-Simulator.git
 cd Event-Camera-Simulator
-
-# Install the complete locked development environment
 uv sync --all-extras --locked
-
-# Or with pip
-python -m pip install -e ".[dev]"
 ```
 
----
+For the core package only:
 
-## Quick Start & CLI
+```bash
+python -m pip install -e .
+```
 
-The CLI is structured and powered by [Tyro](https://brentyi.github.io/tyro/):
+## Quick Start
 
-### 1. Run Built-in 960 FPS Synthetic Demo
-Generates a 960 FPS synthetic test video, simulates events, and renders an illustrative side-by-side video:
+Run the self-contained synthetic demo:
+
 ```bash
 uv run evsim demo --output-dir output/demo --fps 960 --seconds 1.0
 ```
 
-### 2. Simulate Custom Video or Image Sequence
+Simulate a video or image directory:
+
 ```bash
 uv run evsim simulate \
   --input path/to/high_fps_video.mp4 \
@@ -59,108 +102,109 @@ uv run evsim simulate \
   --video output/events.avi
 ```
 
-For long inputs, add `--stream` with `--output-csv` and/or `--output-npz` to
-write event chunks through disk instead of retaining the complete stream in RAM.
-Video timestamps come from container PTS via PyAV, so variable-frame-rate input
-is preserved. Image sequences with an invalid `ts_frame.txt` fail by default;
-use `--allow-timestamp-fallback` only when fixed-FPS recovery is intentional.
+For long inputs, add `--stream`. CSV data is appended incrementally and NPZ data
+is assembled through disk-backed chunks instead of retaining the complete event
+stream in memory.
 
-### 3. Run Core Analytical Validation
-Verifies consistency across 12 formal model-consistency checks (static scene suppression, ramp firing, microsecond alignment, refractory suppression, and backend equivalence):
 ```bash
-uv run evsim validate --output-json output/validation.json
+uv run evsim simulate \
+  --input path/to/input.mp4 \
+  --output-npz output/events.npz \
+  --stream
 ```
 
-### 4. Benchmark Execution Backends
-Evaluates throughput between the fast vectorized NumPy engine and the reference pixel-loop:
+Inspect source timing or validate the mathematical model:
+
 ```bash
+uv run evsim inspect --input path/to/input.mp4
+uv run evsim validate --output-json output/validation.json
 uv run evsim benchmark --frames 60
 ```
 
-### 5. Inspect Input Metadata
-```bash
-uv run evsim inspect --input path/to/input.mp4
-```
-
----
-
 ## Interactive Interfaces
 
-### 1. Desktop GUI (PySide6)
-A responsive desktop GUI featuring non-blocking background simulation, interactive parameter tuning, and real-time event visualization:
-```bash
-uv run evsim-gui
-# or:
-uv run evsim gui
-```
+Streamlit web application:
 
-
-### 2. Web UI (Streamlit)
-A cloud-deployable browser interface available locally or on Streamlit Community Cloud:
 ```bash
 uv run streamlit run app.py
 ```
-Live demo: [Streamlit Public App](https://event-camera-simulator-7mlnyhk52f9fp4ydasp4jd.streamlit.app/)
 
----
-
-## Architecture Overview
-
-```text
-Input Video / Frames (PyAV PTS / ImageSequence)
-                     │
-                     ▼
-  Photometric Preprocessing (Normalized DN -> Optional Linearization -> Log Intensity)
-                     │
-                     ▼
-  Stateful Pixel Processing (Vectorized NumPy or Reference Loop)
-  - Threshold crossing detection: Delta L >= C+ (ON) or Delta L <= -C- (OFF)
-  - Sub-frame piecewise-linear timestamp interpolation
-  - Microsecond floor quantization & refractory dead-time filtering
-  - Stateful reference level update: L_ref <- L_k
-                     │
-                     ▼
-  Event Stream & Diagnostics
-  ├── CSV ('timestamp_s,x,y,polarity') & Compressed NPZ ('events')
-  ├── JSON Statistics (Event rates, ON/OFF ratio, processing FPS)
-  └── Multi-panel Illustrative Video (Input | Events | Overlay)
-```
-
----
-
-## Documentation Directory
-
-| Document | Description |
-|---|---|
-| [**Repository Guide**](docs/REPOSITORY_GUIDE.md) | Stable project layout, generated artifacts, and standard workflow. |
-| [**Demo Guide**](docs/DEMO_GUIDE.md) | Public/local demo flow and the recommended presentation sequence. |
-| [**Architecture & Design**](docs/design.md) | In-depth mathematical formulation, assumptions A1–A7, decoupled pipeline, and coordinate conventions. |
-| [**Configuration Reference**](docs/configuration.md) | Complete reference of parameters, units, physical ranges, and presets (`ideal`, `enhanced`). |
-| [**Experimental Verification**](docs/experiments.md) | Quantitative validation: threshold sweep, FPS convergence, noise ablation, and benchmarks. |
-| [**Related Work**](docs/RELATED_WORK.md) | Academic positioning and comparison with ESIM, v2e, and the RPG Event-Camera Simulator. |
-| [**Submission Workspace**](submission/README.md) | Final deliverable checklist and submission ZIP instructions. |
-| [**Submission Checklist**](submission/SUBMISSION_CHECKLIST.md) | Coursework deliverables checklist and technical verification commands. |
-| [**Coursework Report**](submission/COURSE_REPORT.md) | Research report detailing motivation, model derivations, and findings. |
-| [**AI Use Report**](submission/AI_USE_AND_REVIEW_REPORT.md) | Formal documentation of AI assistance, review, and verification methodology. |
-
----
-
-## Development & Testing
+PySide6 desktop application:
 
 ```bash
-# Run full unit test suite
-uv run pytest -v
-
-# Run code style & lint checks
-uv run ruff check
-uv run ruff format --check
-
-# Execute full experimental validation suite
-uv run python scripts/run_experiments.py
-
-# Assemble a clean submission ZIP after slides/video/report are ready
-uv run python scripts/prepare_submission.py \
-  --slides submission/slides.pdf \
-  --video submission/presentation_video.mp4 \
-  --ai-report submission/AI_USE_AND_REVIEW_REPORT.pdf
+uv run evsim-gui
 ```
+
+Both interfaces delegate event generation to the same canonical simulation core.
+
+## Event Format
+
+Events use a compact NumPy structured dtype:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `timestamp_us` | `int64` | Event time in microseconds |
+| `x` | `uint16` | Horizontal pixel coordinate |
+| `y` | `uint16` | Vertical pixel coordinate |
+| `polarity` | `int8` | `+1` for ON, `-1` for OFF |
+
+CSV output uses `timestamp_s,x,y,polarity`; NPZ output stores the structured array
+under the `events` key.
+
+## Repository Layout
+
+```text
+src/evsim/             Simulation core, IO, CLI, GUI, and validation
+configs/               Ideal and enhanced sensor presets
+tests/                 Unit, integration, backend, CLI, web, and GUI tests
+scripts/               Reproducible experiment automation
+docs/                  Design, configuration, experiments, and demo guides
+app.py                 Streamlit entry point
+.github/workflows/     Automated quality and behavior checks
+output/                Generated locally and intentionally not versioned
+```
+
+## Team Work Areas
+
+The project is organized around three complementary work areas:
+
+1. **Sensor model and algorithms**: photometric preprocessing, threshold crossing,
+   interpolation, refractory behavior, and sensor non-idealities.
+2. **Software system and interfaces**: timestamp-aware input, event serialization,
+   streaming execution, CLI, desktop GUI, and web UI.
+3. **Verification and evaluation**: analytical checks, backend comparison,
+   performance experiments, automated tests, and reproducible demos.
+
+This division keeps ownership clear while requiring all interfaces and experiments
+to agree on one tested simulation core.
+
+## Development
+
+```bash
+uv run pytest -q
+uv run ruff check .
+uv run ruff format --check .
+uv run python scripts/run_experiments.py
+```
+
+Generated results are written under `output/` and can be recreated at any time.
+The CI workflow runs formatting checks, tests, core validation, and UI smoke tests.
+
+## Limitations
+
+- Event timing between frames assumes piecewise-linear log-intensity change.
+- Motion blur or temporal aliasing already present in the input cannot be recovered.
+- Pixels are modeled independently; bus contention and sensor readout bandwidth are
+  outside the current model.
+- The noise model is phenomenological rather than transistor-level.
+
+These boundaries are intentional and documented so results remain interpretable.
+
+## Documentation
+
+- [Architecture and Mathematical Design](docs/design.md)
+- [Configuration Reference](docs/configuration.md)
+- [Experimental Evaluation](docs/experiments.md)
+- [Demo Guide](docs/DEMO_GUIDE.md)
+- [Repository Guide](docs/REPOSITORY_GUIDE.md)
+- [Related Work](docs/RELATED_WORK.md)

@@ -81,6 +81,8 @@ class DiskEventSink:
                 if self._count == 0:
                     np.savez_compressed(self.npz_path, events=empty_events())
                     return
+                # NPZ is finalized from a memmap, so long runs stay disk-backed.
+                # 最终格式不变，但合并过程不会把全部事件重新塞回内存。
                 array_path = Path(self._temporary.name) / "events.npy"
                 combined = np.lib.format.open_memmap(
                     array_path, mode="w+", dtype=EVENT_DTYPE, shape=(self._count,)

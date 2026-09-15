@@ -44,7 +44,7 @@ sensor fidelity.
 
 ## Project statement
 
-This project is a course-oriented, configurable and verifiable implementation
+This project is a configurable and verifiable implementation
 focusing on the log-intensity contrast-threshold model, temporal interpolation,
 simplified sensor non-idealities, reproducible validation and computational
 efficiency.
@@ -61,9 +61,7 @@ SLAM, reconstruction or deep-learning downstream tasks.
    Simulator," CoRL, PMLR 87, 2018.
 4. Y. Hu, S.-C. Liu, T. Delbruck, "v2e: From Video Frames to Realistic DVS
    Events," CVPR Workshops, 2021.
-5. EE5110/EE6110 Lecture 1, "From Frames to Events: Theory and Applications
-   of Event-based Vision."
-6. Sensory Systems and Robotics event-based vision resources:
+5. Sensory Systems and Robotics event-based vision resources:
    https://github.com/uzh-rpg/event-based_vision_resources
-7. Event-based datasets collection:
+6. Event-based datasets collection:
    https://github.com/lisiqi19971013/event-based-datasets

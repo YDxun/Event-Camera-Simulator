@@ -170,6 +170,8 @@ class VideoSource(FrameSource):
         first_pts_seconds: float | None = None
         previous_us = -1
         for decoded in self.container.decode(self.stream):
+            # Prefer container PTS: VFR videos should keep their real rhythm.
+            # 优先使用真实 PTS，避免把变帧率视频误当成固定帧率。
             if decoded.pts is not None and decoded.time_base is not None:
                 pts_seconds = float(decoded.pts * decoded.time_base)
                 if first_pts_seconds is None:
